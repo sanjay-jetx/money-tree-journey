@@ -2,26 +2,46 @@ import { ArrowRight, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatMoney } from "@/lib/money/calc";
 import { NODE_H, NODE_W, layoutTree } from "@/lib/money/tree";
-import type { PositionedNode, Tone, TreeNode } from "@/lib/money/tree";
+import type { Edge, PositionedNode, TreeNode } from "@/lib/money/tree";
 import { cn } from "@/lib/utils";
 
-const toneStyles: Record<Tone, string> = {
-  income: "border-income/40 bg-income-soft text-income",
-  expense: "border-expense/40 bg-expense-soft text-expense",
-  balance: "border-balance/40 bg-balance-soft text-balance",
-  pending: "border-pending/30 bg-pending-soft text-pending",
-  forecast: "border-forecast/30 bg-forecast/8 text-forecast",
-  neutral: "border-border bg-surface text-foreground",
-};
+function nodeToneClasses(node: PositionedNode): string {
+  switch (node.kind) {
+    case "root":
+    case "month":
+    case "date":
+    case "left":
+      return "border-white/20 bg-[var(--node-primary)] text-white";
+    case "income":
+    case "spent":
+    case "category":
+      return "border-white/25 bg-[var(--node-standard)] text-white";
+    case "transaction":
+    case "forecast":
+      return "border-[var(--node-secondary-text)]/10 bg-[var(--node-secondary)] text-[var(--node-secondary-text)]";
+    default:
+      return "border-border bg-surface text-foreground";
+  }
+}
 
-const toneStroke: Record<Tone, string> = {
-  income: "var(--income)",
-  expense: "var(--expense)",
-  balance: "var(--balance)",
-  pending: "var(--pending)",
-  forecast: "var(--forecast)",
-  neutral: "var(--border)",
-};
+function edgeStrokeColor(edge: Edge): string {
+  switch (edge.to.kind) {
+    case "root":
+    case "month":
+    case "date":
+    case "left":
+      return "var(--node-primary)";
+    case "income":
+    case "spent":
+    case "category":
+      return "var(--node-standard)";
+    case "transaction":
+    case "forecast":
+      return "var(--node-secondary)";
+    default:
+      return "var(--node-edge)";
+  }
+}
 
 export interface ContextAction {
   node: PositionedNode;
