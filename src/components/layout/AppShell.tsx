@@ -71,8 +71,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
 
-        <div className="flex items-center justify-between gap-2 border-t border-sidebar-border pt-4">
-          <Button variant="ghost" size="sm" onClick={toggleTheme} className="gap-2 text-sidebar-muted hover:bg-sidebar-surface hover:text-sidebar-foreground">
+        <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-5">
+          <Button variant="ghost" size="sm" onClick={toggleTheme} className="gap-2 text-sidebar-muted hover:bg-white/10 hover:text-sidebar-foreground">
             {state.theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             {state.theme === "dark" ? "Light" : "Dark"}
           </Button>
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="pb-24 lg:pb-0 lg:pl-[236px]">{children}</main>
+      <main className="pb-24 lg:pb-0 lg:pl-[262px]">{children}</main>
 
       <nav className="fixed bottom-0 left-0 z-30 flex w-full items-center justify-between gap-1 border-t border-border bg-background/95 px-2 py-1.5 backdrop-blur lg:hidden">
         {NAV.slice(0, 3).map((item) => (
@@ -108,7 +108,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <button
           type="button"
           onClick={() => openDialog({ kind: "expense" })}
-          className="mx-1 flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[var(--shadow-node)]"
+          className="accent-gradient mx-1 flex size-12 shrink-0 items-center justify-center rounded-2xl text-primary-foreground shadow-[0_14px_30px_-12px_var(--glow)]"
           aria-label="Add transaction"
         >
           <Plus className="size-6" />
@@ -121,7 +121,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={() => openDialog({ kind: "expense" })}
-        className="fixed right-8 bottom-8 z-30 hidden items-center gap-2 rounded-2xl bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground shadow-[var(--shadow-node)] transition-transform hover:scale-[1.03] lg:flex"
+        className="fixed right-8 bottom-8 z-30 hidden items-center gap-2 accent-gradient rounded-[20px] px-6 py-4 text-sm font-bold tracking-tight text-primary-foreground shadow-[0_18px_40px_-14px_var(--glow)] transition-transform hover:scale-[1.04] lg:flex"
       >
         <Plus className="size-4" /> Add money entry
       </button>
