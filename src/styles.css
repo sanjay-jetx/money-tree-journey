@@ -5,7 +5,7 @@
 @custom-variant light (&:is(.light *));
 
 /*
- * MoneyTree design system — teal + warm cream + natural green.
+ * MoneyTree design system — periwinkle + white + natural green.
  * Light, airy fintech surface with green nature accents.
  * Never hardcode colors in components — use these semantic tokens.
  */
@@ -166,8 +166,8 @@
 
 @utility canvas-grain {
   background-image:
-    radial-gradient(circle at 20% 10%, color-mix(in oklab, #168a86 9%, transparent), transparent 55%),
-    radial-gradient(circle at 82% 82%, color-mix(in oklab, #4f9b68 11%, transparent), transparent 58%);
+    radial-gradient(circle at 20% 10%, color-mix(in oklab, #7b8cff 10%, transparent), transparent 55%),
+    radial-gradient(circle at 82% 82%, color-mix(in oklab, #55a66e 10%, transparent), transparent 58%);
   background-color: var(--color-canvas);
 }
 
