@@ -63,12 +63,15 @@
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-border: var(--sidebar-border);
 
-  --shadow-glow: 0 2px 4px oklch(0.2 0.03 275 / 0.05), 0 24px 50px -22px var(--glow);
-  --shadow-node: 0 1px 3px oklch(0.2 0.03 275 / 0.06), 0 18px 40px -24px oklch(0.35 0.08 265 / 0.28);
+  --shadow-glow: 0 2px 6px oklch(0.2 0.03 275 / 0.06), 0 30px 60px -24px var(--glow);
+  --shadow-node:
+    0 1px 2px oklch(0.2 0.03 275 / 0.05), 0 4px 12px -4px oklch(0.35 0.08 265 / 0.12),
+    0 24px 48px -24px oklch(0.3 0.09 265 / 0.28);
 }
 
 :root {
   --radius: 1.25rem;
+
 
   /* bright content area against the deep blue sidebar */
   --background: #f8fafc;
@@ -181,7 +184,8 @@
 
 @utility card-soft {
   background-color: var(--color-surface);
-  border-radius: var(--radius-2xl);
+  border: 1px solid color-mix(in oklab, var(--color-border) 70%, transparent);
+  border-radius: 22px;
   box-shadow: var(--shadow-node);
   transition:
     box-shadow 0.25s ease,
@@ -193,6 +197,21 @@
   }
 }
 
+
+@utility accent-gradient {
+  background-image: linear-gradient(135deg, #8b5cf6 0%, #6d3ff0 55%, #2563eb 100%);
+}
+
+@utility sidebar-gradient {
+  background-image: linear-gradient(180deg, #0b3d91 0%, #0a3383 55%, #14205c 100%);
+}
+
+@utility stat-figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
 
 @utility num {
   font-family: var(--font-mono);

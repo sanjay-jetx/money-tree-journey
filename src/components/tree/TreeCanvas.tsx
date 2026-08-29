@@ -6,9 +6,9 @@ import type { PositionedNode, Tone, TreeNode } from "@/lib/money/tree";
 import { cn } from "@/lib/utils";
 
 const toneStyles: Record<Tone, string> = {
-  income: "border-income/25 bg-income-soft text-income",
-  expense: "border-expense/25 bg-expense-soft text-expense",
-  balance: "border-balance/25 bg-balance-soft text-balance",
+  income: "border-income/40 bg-income-soft text-income",
+  expense: "border-expense/40 bg-expense-soft text-expense",
+  balance: "border-balance/40 bg-balance-soft text-balance",
   pending: "border-pending/30 bg-pending-soft text-pending",
   forecast: "border-forecast/30 bg-forecast/8 text-forecast",
   neutral: "border-border bg-surface text-foreground",
@@ -170,8 +170,8 @@ export function TreeCanvas({
                 d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`}
                 fill="none"
                 stroke={toneStroke[edge.tone]}
-                strokeOpacity={0.5}
-                strokeWidth={2.4}
+                strokeOpacity={0.62}
+                strokeWidth={2.8}
                 strokeLinecap="round"
                 className={edge.dashed ? "flow-line" : undefined}
               />
@@ -199,12 +199,13 @@ export function TreeCanvas({
                   onContextAction?.({ node, x: e.clientX, y: e.clientY });
                 }}
                 className={cn(
-                  "animate-grow-in w-full rounded-2xl border px-3.5 py-2.5 text-left shadow-[var(--shadow-node)] transition-all duration-200",
+                  "animate-grow-in w-full rounded-[20px] border-[1.5px] px-4 py-3 text-left shadow-[var(--shadow-node)] transition-all duration-200",
                   toneStyles[node.tone],
-                  selectedId === node.id && "ring-2 ring-ring ring-offset-2 ring-offset-canvas",
+                  selectedId === node.id &&
+                    "ring-[3px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_18px_40px_-14px_var(--glow)]",
                   dimmed
-                    ? "opacity-25"
-                    : "hover:-translate-y-0.5 hover:shadow-[var(--shadow-glow)]",
+                    ? "opacity-20"
+                    : "hover:-translate-y-1 hover:shadow-[var(--shadow-glow)]",
                 )}
                 style={{ height: NODE_H }}
               >
@@ -212,7 +213,7 @@ export function TreeCanvas({
                   {node.icon && <span className="text-xs">{node.icon}</span>}
                   <span className="truncate">{node.label}</span>
                 </div>
-                <div className="num mt-0.5 truncate text-base leading-tight font-semibold text-foreground">
+                <div className="stat-figure mt-1 truncate text-[17px] leading-tight text-foreground">
                   {formatMoney(node.amount, currency)}
                 </div>
                 {node.balanceBefore !== undefined && node.balanceAfter !== undefined && (
