@@ -34,11 +34,11 @@ interface Props {
   collapsed: Set<string>;
   onToggle: (id: string) => void;
   onSelect: (node: PositionedNode) => void;
-  selectedId?: string | null;
-  highlightIds?: Set<string>;
+  selectedId?: string | null | undefined;
+  highlightIds?: Set<string> | undefined;
   currency: string;
-  onContextAction?: (action: ContextAction) => void;
-  className?: string;
+  onContextAction?: ((action: ContextAction) => void) | undefined;
+  className?: string | undefined;
 }
 
 export function TreeCanvas({

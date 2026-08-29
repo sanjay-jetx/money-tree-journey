@@ -71,7 +71,7 @@ function InsightsPage() {
           {insights.map((i) => (
             <article
               key={i.id}
-              className={cn("rounded-2xl border p-4", toneClass[i.tone] ?? toneClass.neutral)}
+              className={cn("rounded-2xl border p-4", toneClass[i.tone] ?? toneClass["neutral"])}
             >
               <div className="flex items-start justify-between gap-3">
                 <h2 className="text-sm font-semibold text-foreground">{i.title}</h2>
