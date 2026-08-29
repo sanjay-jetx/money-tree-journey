@@ -54,7 +54,7 @@ export interface Edge {
 }
 
 export const NODE_W = 186;
-export const NODE_H = 90;
+export const NODE_H = 100;
 const GAP_X = 26;
 const GAP_Y = 108;
 
