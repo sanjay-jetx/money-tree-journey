@@ -61,8 +61,8 @@
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-border: var(--sidebar-border);
 
-  --shadow-glow: 0 1px 2px oklch(0.3 0.06 290 / 0.04), 0 18px 40px -24px var(--glow);
-  --shadow-node: 0 1px 2px oklch(0.3 0.06 290 / 0.05), 0 12px 28px -18px oklch(0.4 0.09 290 / 0.28);
+  --shadow-glow: 0 1px 2px oklch(0.3 0.03 190 / 0.05), 0 18px 40px -24px var(--glow);
+  --shadow-node: 0 1px 2px oklch(0.3 0.03 190 / 0.06), 0 12px 28px -18px oklch(0.42 0.06 190 / 0.3);
 }
 
 :root {
