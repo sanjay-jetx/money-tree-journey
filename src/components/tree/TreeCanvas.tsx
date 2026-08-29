@@ -143,7 +143,7 @@ export function TreeCanvas({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerUp}
-      onWheel={onWheel}
+      
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
