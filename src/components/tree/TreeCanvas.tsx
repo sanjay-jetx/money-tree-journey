@@ -213,26 +213,29 @@ export function TreeCanvas({
                 <div className="num mt-0.5 truncate text-base leading-tight font-semibold text-foreground">
                   {formatMoney(node.amount, currency)}
                 </div>
+                {node.balanceBefore !== undefined && node.balanceAfter !== undefined && (
+                  <div className="mt-1 grid grid-cols-2 gap-1 border-t border-border/40 pt-1.5">
+                    <div className="flex min-w-0 flex-col">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Before</span>
+                      <span className="num truncate text-[11px] font-semibold text-foreground">
+                        {formatMoney(node.balanceBefore, currency)}
+                      </span>
+                    </div>
+                    <div className="flex min-w-0 flex-col items-end">
+                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">After</span>
+                      <span
+                        className={cn(
+                          "num truncate text-[11px] font-semibold",
+                          node.balanceAfter >= node.balanceBefore ? "text-income" : "text-expense",
+                        )}
+                      >
+                        {formatMoney(node.balanceAfter, currency)}
+                      </span>
+                    </div>
+                  </div>
+                )}
                 {node.sublabel && (
                   <div className="truncate text-[10px] text-muted-foreground">{node.sublabel}</div>
-                )}
-                {node.balanceBefore !== undefined && node.balanceAfter !== undefined && (
-                  <div className="mt-1 flex items-center gap-1 border-t border-border/50 pt-1 text-[9px] text-muted-foreground">
-                    <span className="num truncate">
-                      {formatMoney(node.balanceBefore, currency)}
-                    </span>
-                    <ArrowRight className="size-2.5 shrink-0 opacity-60" />
-                    <span
-                      className={cn(
-                        "num truncate font-semibold",
-                        node.balanceAfter >= node.balanceBefore
-                          ? "text-income"
-                          : "text-expense",
-                      )}
-                    >
-                      {formatMoney(node.balanceAfter, currency)}
-                    </span>
-                  </div>
                 )}
 
               </button>
