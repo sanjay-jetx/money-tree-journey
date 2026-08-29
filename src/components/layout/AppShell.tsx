@@ -24,20 +24,20 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <aside className="fixed top-0 left-0 z-30 hidden h-screen w-[236px] flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 lg:flex">
+      <aside className="fixed top-0 left-0 z-30 hidden h-screen w-[236px] flex-col border-r border-sidebar-border bg-sidebar px-4 py-6 text-sidebar-foreground lg:flex">
         <Link to="/" className="flex items-center gap-2.5 px-2">
           <span className="text-2xl">🌳</span>
           <div>
             <div className="font-display text-lg leading-none font-semibold">MoneyTree</div>
-            <div className="text-[11px] text-muted-foreground">the story of your money</div>
+            <div className="text-[11px] text-sidebar-muted">the story of your money</div>
           </div>
         </Link>
 
-        <div className="mt-7 rounded-2xl bg-secondary/70 p-4">
-          <div className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
+        <div className="mt-7 rounded-2xl bg-sidebar-surface p-4">
+          <div className="text-[11px] tracking-[0.14em] text-sidebar-muted uppercase">
             Current balance
           </div>
-          <div className="num mt-1 text-2xl font-semibold text-balance">
+          <div className="num mt-1 text-2xl font-semibold text-sidebar-foreground">
             {ready ? formatMoney(currentBalance(state), state.currency) : "—"}
           </div>
         </div>
@@ -52,8 +52,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
                   active
-                    ? "bg-sidebar-accent font-semibold text-foreground"
-                    : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-foreground",
+                    ? "bg-sidebar-accent font-semibold text-white shadow-[0_8px_20px_-10px_var(--glow)]"
+                    : "text-sidebar-muted hover:bg-sidebar-surface hover:text-sidebar-foreground",
                 )}
               >
                 <span className="text-base">{item.icon}</span>
@@ -64,7 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="flex items-center justify-between gap-2 border-t border-sidebar-border pt-4">
-          <Button variant="ghost" size="sm" onClick={toggleTheme} className="gap-2">
+          <Button variant="ghost" size="sm" onClick={toggleTheme} className="gap-2 text-sidebar-muted hover:bg-sidebar-surface hover:text-sidebar-foreground">
             {state.theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
             {state.theme === "dark" ? "Light" : "Dark"}
           </Button>
