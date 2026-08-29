@@ -233,32 +233,27 @@ export function TreeCanvas({
                   {node.icon && <span className="text-xs">{node.icon}</span>}
                   <span className="truncate">{node.label}</span>
                 </div>
-                <div className="stat-figure mt-1 truncate text-[17px] leading-tight text-foreground">
+                <div className="stat-figure mt-1 truncate text-[17px] leading-tight">
                   {formatMoney(node.amount, currency)}
                 </div>
                 {node.balanceBefore !== undefined && node.balanceAfter !== undefined && (
-                  <div className="mt-1 grid grid-cols-2 gap-1 border-t border-border/40 pt-1.5">
+                  <div className="mt-1 grid grid-cols-2 gap-1 border-t border-current/20 pt-1.5">
                     <div className="flex min-w-0 flex-col">
-                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Before</span>
-                      <span className="num truncate text-[11px] font-semibold text-foreground">
+                      <span className="text-[9px] uppercase tracking-wider opacity-60">Before</span>
+                      <span className="num truncate text-[11px] font-semibold opacity-90">
                         {formatMoney(node.balanceBefore, currency)}
                       </span>
                     </div>
                     <div className="flex min-w-0 flex-col items-end">
-                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">After</span>
-                      <span
-                        className={cn(
-                          "num truncate text-[11px] font-semibold",
-                          node.balanceAfter >= node.balanceBefore ? "text-income" : "text-expense",
-                        )}
-                      >
+                      <span className="text-[9px] uppercase tracking-wider opacity-60">After</span>
+                      <span className="num truncate text-[11px] font-semibold">
                         {formatMoney(node.balanceAfter, currency)}
                       </span>
                     </div>
                   </div>
                 )}
                 {node.sublabel && (
-                  <div className="truncate text-[10px] text-muted-foreground">{node.sublabel}</div>
+                  <div className="truncate text-[10px] opacity-70">{node.sublabel}</div>
                 )}
 
               </button>
@@ -294,12 +289,7 @@ export function TreeCanvas({
               <ArrowRight className="size-3 text-muted-foreground" />
               <div className="flex flex-col">
                 <span className="text-[9px] tracking-wider text-muted-foreground uppercase">After</span>
-                <span
-                  className={cn(
-                    "num text-[11px] font-semibold",
-                    hovered.balanceAfter >= hovered.balanceBefore ? "text-income" : "text-expense",
-                  )}
-                >
+                <span className="num text-[11px] font-semibold">
                   {formatMoney(hovered.balanceAfter, currency)}
                 </span>
               </div>
