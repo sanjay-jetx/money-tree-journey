@@ -30,7 +30,9 @@ export function formatFullDate(date: string) {
 }
 
 export function formatTime(time: string) {
-  const [h, m] = time.split(":").map(Number);
+  const [hRaw, mRaw] = time.split(":");
+  const h = Number(hRaw ?? 0);
+  const m = Number(mRaw ?? 0);
   const suffix = h >= 12 ? "PM" : "AM";
   const hour = h % 12 === 0 ? 12 : h % 12;
   return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
@@ -81,7 +83,7 @@ export function currentBalance(state: MoneyState) {
 export function balanceOn(state: MoneyState, date: string) {
   const days = buildDays(state);
   const before = days.filter((d) => d.date <= date);
-  return before.length ? before[before.length - 1].closing : state.startingBalance;
+  return before.length ? before[before.length - 1]!.closing : state.startingBalance;
 }
 
 export function openingOn(state: MoneyState, date: string) {
@@ -206,7 +208,7 @@ export interface ForecastPoint {
 export function forecast(state: MoneyState, horizonDays: number): ForecastPoint[] {
   const perDay = averageDailySpend(state);
   const days = buildDays(state);
-  const last = days.length ? days[days.length - 1].date : todayISO();
+  const last = days.length ? days[days.length - 1]!.date : todayISO();
   let balance = currentBalance(state);
   const points: ForecastPoint[] = [];
   for (let i = 1; i <= horizonDays; i++) {
