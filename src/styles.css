@@ -5,7 +5,7 @@
 @custom-variant light (&:is(.light *));
 
 /*
- * MoneyTree design system — teal + warm cream + natural green.
+ * MoneyTree design system — periwinkle + white + natural green.
  * Light, airy fintech surface with green nature accents.
  * Never hardcode colors in components — use these semantic tokens.
  */
@@ -61,62 +61,61 @@
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-border: var(--sidebar-border);
 
-  --shadow-glow: 0 1px 2px oklch(0.3 0.03 190 / 0.05), 0 18px 40px -24px var(--glow);
-  --shadow-node: 0 1px 2px oklch(0.3 0.03 190 / 0.06), 0 12px 28px -18px oklch(0.42 0.06 190 / 0.3);
+  --shadow-glow: 0 1px 2px oklch(0.3 0.04 275 / 0.05), 0 18px 40px -24px var(--glow);
+  --shadow-node: 0 1px 2px oklch(0.3 0.04 275 / 0.06), 0 12px 28px -18px oklch(0.45 0.09 275 / 0.28);
 }
 
 :root {
   --radius: 1rem;
 
-  /* #F5F1E8 warm cream */
-  --background: #f5f1e8;
-  /* #243333 */
-  --foreground: #243333;
-  --canvas: #f8f5ee;
-  /* #FFFDF8 card cream */
-  --surface: #fffdf8;
-  /* #EDE7D9 soft beige */
-  --surface-2: #ede7d9;
-  --card: #fffdf8;
-  --card-foreground: #243333;
-  --popover: #fffdf8;
-  --popover-foreground: #243333;
+  /* #F5F7FF periwinkle wash */
+  --background: #f5f7ff;
+  /* #252B42 */
+  --foreground: #252b42;
+  --canvas: #f8faff;
+  --surface: #ffffff;
+  /* #EDF1FF */
+  --surface-2: #edf1ff;
+  --card: #ffffff;
+  --card-foreground: #252b42;
+  --popover: #ffffff;
+  --popover-foreground: #252b42;
 
-  /* #168A86 teal */
-  --primary: #168a86;
-  --primary-foreground: #fffdf8;
-  /* #EDE7D9 */
-  --secondary: #ede7d9;
-  /* #0F625F dark teal */
-  --secondary-foreground: #0f625f;
-  --muted: #efeade;
-  /* #687575 */
-  --muted-foreground: #687575;
-  /* #D8F0ED light teal */
-  --accent: #d8f0ed;
-  --accent-foreground: #0f625f;
-  --destructive: #d97970;
-  --destructive-foreground: #fffdf8;
+  /* #7B8CFF periwinkle */
+  --primary: #7b8cff;
+  --primary-foreground: #ffffff;
+  /* #EDF1FF */
+  --secondary: #edf1ff;
+  /* #5D6FF2 dark periwinkle */
+  --secondary-foreground: #5d6ff2;
+  --muted: #f0f3ff;
+  /* #6B7285 */
+  --muted-foreground: #6b7285;
+  /* #DDE3FF light periwinkle */
+  --accent: #dde3ff;
+  --accent-foreground: #5d6ff2;
+  --destructive: #e77a7a;
+  --destructive-foreground: #ffffff;
 
-  --border: #e3dccc;
-  --input: #ddd5c2;
-  --ring: #168a86;
-  --glow: color-mix(in oklab, #168a86 20%, transparent);
+  --border: #e3e8fa;
+  --input: #d8def5;
+  --ring: #7b8cff;
+  --glow: color-mix(in oklab, #7b8cff 22%, transparent);
 
-  /* #4F9B68 tree green */
-  --income: #4f9b68;
-  /* #DDEEDF */
-  --income-soft: #ddeedf;
-  /* #D97970 coral */
-  --expense: #d97970;
-  --expense-soft: #f7e3e0;
-  --balance: #168a86;
-  --balance-soft: #d8f0ed;
-  /* #D9AA45 gold */
-  --pending: #d9aa45;
-  --pending-soft: #f6ecd6;
-  --debt: #c96257;
-  --forecast: #0f625f;
+  /* #55A66E tree green */
+  --income: #55a66e;
+  /* #E3F3E8 */
+  --income-soft: #e3f3e8;
+  /* #E77A7A */
+  --expense: #e77a7a;
+  --expense-soft: #fdeaea;
+  --balance: #5d6ff2;
+  --balance-soft: #dde3ff;
+  /* #E3B54B gold */
+  --pending: #e3b54b;
+  --pending-soft: #fbf1da;
+  --debt: #d96a6a;
+  --forecast: #5d6ff2;
 
   --chart-1: var(--income);
   --chart-2: var(--expense);
@@ -124,17 +123,17 @@
   --chart-4: var(--pending);
   --chart-5: var(--forecast);
 
-  --sidebar: #fffdf8;
-  --sidebar-foreground: #243333;
-  --sidebar-accent: #d8f0ed;
-  --sidebar-border: #e3dccc;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #252b42;
+  --sidebar-accent: #dde3ff;
+  --sidebar-border: #e3e8fa;
 }
 
 .light {
-  --background: #f8f5ee;
-  --canvas: #fbf8f2;
-  --surface-2: #f0eadd;
-  --sidebar: #fffdf8;
+  --background: #f8faff;
+  --canvas: #fbfcff;
+  --surface-2: #f0f3ff;
+  --sidebar: #ffffff;
 }
 
 @layer base {
@@ -167,8 +166,8 @@
 
 @utility canvas-grain {
   background-image:
-    radial-gradient(circle at 20% 10%, color-mix(in oklab, #168a86 9%, transparent), transparent 55%),
-    radial-gradient(circle at 82% 82%, color-mix(in oklab, #4f9b68 11%, transparent), transparent 58%);
+    radial-gradient(circle at 20% 10%, color-mix(in oklab, #7b8cff 10%, transparent), transparent 55%),
+    radial-gradient(circle at 82% 82%, color-mix(in oklab, #55a66e 10%, transparent), transparent 58%);
   background-color: var(--color-canvas);
 }
 
