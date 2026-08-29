@@ -20,16 +20,16 @@ export interface TreeNode {
   id: string;
   kind: NodeKind;
   tone: Tone;
-  icon?: string;
+  icon?: string | undefined;
   label: string;
   amount: number;
-  sublabel?: string;
-  date?: string;
-  category?: string;
-  txId?: string;
+  sublabel?: string | undefined;
+  date?: string | undefined;
+  category?: string | undefined;
+  txId?: string | undefined;
   txIds: string[];
   children: TreeNode[];
-  collapsedByDefault?: boolean;
+  collapsedByDefault?: boolean | undefined;
 }
 
 export interface PositionedNode extends TreeNode {
@@ -45,7 +45,7 @@ export interface Edge {
   from: PositionedNode;
   to: PositionedNode;
   tone: Tone;
-  dashed?: boolean;
+  dashed?: boolean | undefined;
 }
 
 export const NODE_W = 176;
