@@ -131,7 +131,7 @@ function categoryNodes(
       children: items.map((t) => txNode(t, balances)),
       collapsedByDefault: items.length > 3,
       balanceBefore: span.before,
-      balanceAfter: span.after,
+      balanceAfter: type === "income" ? span.before + c.total : span.before - c.total,
     };
   });
 }
@@ -163,7 +163,7 @@ function dateNode(
       txIds: incomeTx.map((t) => t.id),
       children: categoryNodes(incomeTx, `${day.date}-in`, "income", balances, day.opening),
       balanceBefore: span.before,
-      balanceAfter: span.after,
+      balanceAfter: span.before + day.income,
     });
   }
 
@@ -185,7 +185,7 @@ function dateNode(
       txIds: expenseTx.map((t) => t.id),
       children: categoryNodes(expenseTx, `${day.date}-out`, "expense", balances, day.closing),
       balanceBefore: span.before,
-      balanceAfter: span.after,
+      balanceAfter: span.before - day.spent,
     });
   }
 
