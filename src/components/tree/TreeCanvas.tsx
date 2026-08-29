@@ -6,12 +6,12 @@ import type { PositionedNode, Tone, TreeNode } from "@/lib/money/tree";
 import { cn } from "@/lib/utils";
 
 const toneStyles: Record<Tone, string> = {
-  income: "border-income/45 bg-income-soft text-income",
-  expense: "border-expense/45 bg-expense-soft text-expense",
-  balance: "border-balance/45 bg-balance-soft text-balance",
-  pending: "border-pending/45 bg-pending-soft text-pending",
-  forecast: "border-forecast/50 bg-forecast/10 text-forecast",
-  neutral: "border-border bg-surface-2 text-foreground",
+  income: "border-income/25 bg-income-soft text-income",
+  expense: "border-expense/25 bg-expense-soft text-expense",
+  balance: "border-balance/25 bg-balance-soft text-balance",
+  pending: "border-pending/30 bg-pending-soft text-pending",
+  forecast: "border-forecast/30 bg-forecast/8 text-forecast",
+  neutral: "border-border bg-surface text-foreground",
 };
 
 const toneStroke: Record<Tone, string> = {
