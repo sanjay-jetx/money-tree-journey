@@ -30,8 +30,8 @@ type Kind = TxType | "owed_to_me" | "i_owe";
 interface DialogState {
   open: boolean;
   kind: Kind;
-  date?: string;
-  editing?: Transaction;
+  date?: string | undefined;
+  editing?: Transaction | undefined;
 }
 
 interface TxDialogApi {
