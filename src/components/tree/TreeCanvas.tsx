@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 function nodeToneClasses(node: PositionedNode): string {
   switch (node.kind) {
     case "root":
+      return "border-white/25 bg-[var(--node-root)] text-white";
     case "month":
     case "date":
     case "left":

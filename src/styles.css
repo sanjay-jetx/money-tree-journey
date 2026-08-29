@@ -117,6 +117,9 @@
   --forecast: #8b5cf6;
 
   /* Unified Money Tree node palette — dark blue + purple */
+  --node-root: #a855f7;
+  --node-root-text: #ffffff;
+  --node-root-soft: color-mix(in oklab, #a855f7 12%, white);
   --node-primary: #0b3d91;
   --node-primary-text: #ffffff;
   --node-primary-soft: color-mix(in oklab, #0b3d91 12%, white);
