@@ -53,16 +53,16 @@ export function StatsBar() {
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-2xl border border-border bg-surface/70 px-3.5 py-3 backdrop-blur"
+          className="card-soft px-4 py-4 transition-transform hover:-translate-y-0.5"
         >
-          <div className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
+          <div className="text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
             {item.label}
           </div>
-          <div className={`num mt-1 text-lg leading-tight font-semibold ${item.tone}`}>
+          <div className={`num mt-1.5 text-xl leading-tight font-semibold ${item.tone}`}>
             {item.value}
           </div>
         </div>
