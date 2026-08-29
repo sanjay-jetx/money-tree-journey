@@ -30,7 +30,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             🌳
           </span>
           <div>
-            <div className="font-display text-xl leading-none font-bold tracking-tight">
+            <div className="font-display text-xl leading-none font-bold tracking-tight text-white">
               MoneyTree
             </div>
             <div className="mt-1 text-[11px] text-sidebar-muted">the story of your money</div>
