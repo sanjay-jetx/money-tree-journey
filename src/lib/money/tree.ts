@@ -296,7 +296,10 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     sublabel: opts.view === "day" ? "opening balance" : "beginning of period",
     txIds: [],
     children,
+    balanceBefore: rootAmount,
+    balanceAfter: scoped.length ? scoped[scoped.length - 1]!.closing : rootAmount,
   };
+
 }
 
 export function layoutTree(root: TreeNode, collapsed: Set<string>) {
