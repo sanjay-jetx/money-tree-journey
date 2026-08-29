@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InsightsRouteImport } from './routes/insights'
+import { Route as SpendingRouteImport } from './routes/spending'
 import { Route as TimeMachineRouteImport } from './routes/time-machine'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const InsightsRoute = InsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SpendingRoute = SpendingRouteImport.update({
+  id: '/spending',
+  path: '/spending',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TimeMachineRoute = TimeMachineRouteImport.update({
   id: '/time-machine',
   path: '/time-machine',
@@ -32,30 +38,34 @@ const TimeMachineRoute = TimeMachineRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/insights': typeof InsightsRoute
+  '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/insights' | '/time-machine'
+  fullPaths: '/' | '/insights' | '/spending' | '/time-machine'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/insights' | '/time-machine'
-  id: '__root__' | '/' | '/insights' | '/time-machine'
+  to: '/' | '/insights' | '/spending' | '/time-machine'
+  id: '__root__' | '/' | '/insights' | '/spending' | '/time-machine'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   InsightsRoute: typeof InsightsRoute
+  SpendingRoute: typeof SpendingRoute
   TimeMachineRoute: typeof TimeMachineRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/spending': {
+      id: '/spending'
+      path: '/spending'
+      fullPath: '/spending'
+      preLoaderRoute: typeof SpendingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/time-machine': {
       id: '/time-machine'
       path: '/time-machine'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   InsightsRoute: InsightsRoute,
+  SpendingRoute: SpendingRoute,
   TimeMachineRoute: TimeMachineRoute,
 }
 export const routeTree = rootRouteImport
