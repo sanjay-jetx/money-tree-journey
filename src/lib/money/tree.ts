@@ -118,6 +118,21 @@ function categoryNodes(
       balances,
       fallback,
     );
+
+    // Single-transaction category: no point in a wrapper branch — show the leaf itself.
+    if (items.length === 1) {
+      const only = items[0]!;
+      const leaf = txNode(only, balances);
+      return {
+        ...leaf,
+        id: `${keyPrefix}-cat-${c.category}`,
+        label: c.category,
+        icon: def.icon,
+        sublabel: [only.subcategory || only.description, only.time].filter(Boolean).join(" · "),
+        children: [],
+      };
+    }
+
     return {
       id: `${keyPrefix}-cat-${c.category}`,
       kind: "category" as NodeKind,
@@ -134,6 +149,7 @@ function categoryNodes(
       balanceAfter: type === "income" ? span.before + c.total : span.before - c.total,
     };
   });
+
 }
 
 function dateNode(
