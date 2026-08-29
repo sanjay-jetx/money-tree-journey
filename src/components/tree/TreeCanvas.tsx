@@ -1,4 +1,4 @@
-import { Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
+import { ArrowRight, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatMoney } from "@/lib/money/calc";
 import { NODE_H, NODE_W, layoutTree } from "@/lib/money/tree";
