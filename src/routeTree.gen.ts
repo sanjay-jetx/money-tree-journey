@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as IncomeRouteImport } from './routes/income'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as SpendingRouteImport } from './routes/spending'
 import { Route as TimeMachineRouteImport } from './routes/time-machine'
@@ -17,6 +18,11 @@ import { Route as TimeMachineRouteImport } from './routes/time-machine'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IncomeRoute = IncomeRouteImport.update({
+  id: '/income',
+  path: '/income',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InsightsRoute = InsightsRouteImport.update({
@@ -37,12 +43,14 @@ const TimeMachineRoute = TimeMachineRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/income': typeof IncomeRoute
   '/insights': typeof InsightsRoute
   '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/income': typeof IncomeRoute
   '/insights': typeof InsightsRoute
   '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/income': typeof IncomeRoute
   '/insights': typeof InsightsRoute
   '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/insights' | '/spending' | '/time-machine'
+  fullPaths: '/' | '/income' | '/insights' | '/spending' | '/time-machine'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/insights' | '/spending' | '/time-machine'
-  id: '__root__' | '/' | '/insights' | '/spending' | '/time-machine'
+  to: '/' | '/income' | '/insights' | '/spending' | '/time-machine'
+  id: '__root__' | '/' | '/income' | '/insights' | '/spending' | '/time-machine'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  IncomeRoute: typeof IncomeRoute
   InsightsRoute: typeof InsightsRoute
   SpendingRoute: typeof SpendingRoute
   TimeMachineRoute: typeof TimeMachineRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/income': {
+      id: '/income'
+      path: '/income'
+      fullPath: '/income'
+      preLoaderRoute: typeof IncomeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/insights': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  IncomeRoute: IncomeRoute,
   InsightsRoute: InsightsRoute,
   SpendingRoute: SpendingRoute,
   TimeMachineRoute: TimeMachineRoute,
