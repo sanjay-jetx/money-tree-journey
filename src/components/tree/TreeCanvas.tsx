@@ -2,26 +2,46 @@ import { ArrowRight, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatMoney } from "@/lib/money/calc";
 import { NODE_H, NODE_W, layoutTree } from "@/lib/money/tree";
-import type { PositionedNode, Tone, TreeNode } from "@/lib/money/tree";
+import type { Edge, PositionedNode, TreeNode } from "@/lib/money/tree";
 import { cn } from "@/lib/utils";
 
-const toneStyles: Record<Tone, string> = {
-  income: "border-income/40 bg-income-soft text-income",
-  expense: "border-expense/40 bg-expense-soft text-expense",
-  balance: "border-balance/40 bg-balance-soft text-balance",
-  pending: "border-pending/30 bg-pending-soft text-pending",
-  forecast: "border-forecast/30 bg-forecast/8 text-forecast",
-  neutral: "border-border bg-surface text-foreground",
-};
+function nodeToneClasses(node: PositionedNode): string {
+  switch (node.kind) {
+    case "root":
+    case "month":
+    case "date":
+    case "left":
+      return "border-white/20 bg-[var(--node-primary)] text-white";
+    case "income":
+    case "spent":
+    case "category":
+      return "border-white/25 bg-[var(--node-standard)] text-white";
+    case "transaction":
+    case "forecast":
+      return "border-[var(--node-secondary-text)]/10 bg-[var(--node-secondary)] text-[var(--node-secondary-text)]";
+    default:
+      return "border-border bg-surface text-foreground";
+  }
+}
 
-const toneStroke: Record<Tone, string> = {
-  income: "var(--income)",
-  expense: "var(--expense)",
-  balance: "var(--balance)",
-  pending: "var(--pending)",
-  forecast: "var(--forecast)",
-  neutral: "var(--border)",
-};
+function edgeStrokeColor(edge: Edge): string {
+  switch (edge.to.kind) {
+    case "root":
+    case "month":
+    case "date":
+    case "left":
+      return "var(--node-primary)";
+    case "income":
+    case "spent":
+    case "category":
+      return "var(--node-standard)";
+    case "transaction":
+    case "forecast":
+      return "var(--node-secondary)";
+    default:
+      return "var(--node-edge)";
+  }
+}
 
 export interface ContextAction {
   node: PositionedNode;
@@ -169,7 +189,7 @@ export function TreeCanvas({
                 key={edge.id}
                 d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`}
                 fill="none"
-                stroke={toneStroke[edge.tone]}
+                stroke={edgeStrokeColor(edge)}
                 strokeOpacity={0.62}
                 strokeWidth={2.8}
                 strokeLinecap="round"
@@ -200,7 +220,7 @@ export function TreeCanvas({
                 }}
                 className={cn(
                   "animate-grow-in w-full rounded-[20px] border-[1.5px] px-4 py-3 text-left shadow-[var(--shadow-node)] transition-all duration-200",
-                  toneStyles[node.tone],
+                  nodeToneClasses(node),
                   selectedId === node.id &&
                     "ring-[3px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_18px_40px_-14px_var(--glow)]",
                   dimmed
@@ -213,32 +233,27 @@ export function TreeCanvas({
                   {node.icon && <span className="text-xs">{node.icon}</span>}
                   <span className="truncate">{node.label}</span>
                 </div>
-                <div className="stat-figure mt-1 truncate text-[17px] leading-tight text-foreground">
+                <div className="stat-figure mt-1 truncate text-[17px] leading-tight">
                   {formatMoney(node.amount, currency)}
                 </div>
                 {node.balanceBefore !== undefined && node.balanceAfter !== undefined && (
-                  <div className="mt-1 grid grid-cols-2 gap-1 border-t border-border/40 pt-1.5">
+                  <div className="mt-1 grid grid-cols-2 gap-1 border-t border-current/20 pt-1.5">
                     <div className="flex min-w-0 flex-col">
-                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Before</span>
-                      <span className="num truncate text-[11px] font-semibold text-foreground">
+                      <span className="text-[9px] uppercase tracking-wider opacity-60">Before</span>
+                      <span className="num truncate text-[11px] font-semibold opacity-90">
                         {formatMoney(node.balanceBefore, currency)}
                       </span>
                     </div>
                     <div className="flex min-w-0 flex-col items-end">
-                      <span className="text-[9px] uppercase tracking-wider text-muted-foreground">After</span>
-                      <span
-                        className={cn(
-                          "num truncate text-[11px] font-semibold",
-                          node.balanceAfter >= node.balanceBefore ? "text-income" : "text-expense",
-                        )}
-                      >
+                      <span className="text-[9px] uppercase tracking-wider opacity-60">After</span>
+                      <span className="num truncate text-[11px] font-semibold">
                         {formatMoney(node.balanceAfter, currency)}
                       </span>
                     </div>
                   </div>
                 )}
                 {node.sublabel && (
-                  <div className="truncate text-[10px] text-muted-foreground">{node.sublabel}</div>
+                  <div className="truncate text-[10px] opacity-70">{node.sublabel}</div>
                 )}
 
               </button>
@@ -274,12 +289,7 @@ export function TreeCanvas({
               <ArrowRight className="size-3 text-muted-foreground" />
               <div className="flex flex-col">
                 <span className="text-[9px] tracking-wider text-muted-foreground uppercase">After</span>
-                <span
-                  className={cn(
-                    "num text-[11px] font-semibold",
-                    hovered.balanceAfter >= hovered.balanceBefore ? "text-income" : "text-expense",
-                  )}
-                >
+                <span className="num text-[11px] font-semibold">
                   {formatMoney(hovered.balanceAfter, currency)}
                 </span>
               </div>
