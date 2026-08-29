@@ -86,31 +86,44 @@ export function TreeCanvas({
   }
 
   function onPointerMove(e: React.PointerEvent) {
-    if (!drag.current) return;
-    setTransform((t) => ({
-      ...t,
-      x: drag.current!.tx + (e.clientX - drag.current!.x),
-      y: drag.current!.ty + (e.clientY - drag.current!.y),
-    }));
+    const start = drag.current;
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    setTransform((t) => ({ ...t, x: start.tx + dx, y: start.ty + dy }));
   }
 
   function onPointerUp() {
     drag.current = null;
   }
 
-  function onWheel(e: React.WheelEvent) {
-    e.preventDefault();
+  const handleWheel = useCallback((e: WheelEvent) => {
     const el = containerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const px = e.clientX - rect.left;
     const py = e.clientY - rect.top;
+    const dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 100 : 1);
     setTransform((t) => {
-      const next = Math.min(2.2, Math.max(0.25, t.scale * (e.deltaY > 0 ? 0.92 : 1.08)));
+      const next = Math.min(2.2, Math.max(0.25, t.scale * Math.exp(-dy * 0.0015)));
       const ratio = next / t.scale;
       return { scale: next, x: px - (px - t.x) * ratio, y: py - (py - t.y) * ratio };
     });
-  }
+  }, []);
+
+  const wheelRef = useRef(handleWheel);
+  wheelRef.current = handleWheel;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const listener = (e: WheelEvent) => {
+      e.preventDefault();
+      wheelRef.current(e);
+    };
+    el.addEventListener("wheel", listener, { passive: false });
+    return () => el.removeEventListener("wheel", listener);
+  }, []);
 
   function zoom(dir: 1 | -1) {
     setTransform((t) => ({
@@ -130,7 +143,7 @@ export function TreeCanvas({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerUp}
-      onWheel={onWheel}
+      
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
