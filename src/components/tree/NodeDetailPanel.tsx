@@ -51,7 +51,34 @@ export function NodeDetailPanel({ node, onClose }: Props) {
               {node.date && (
                 <div className="mt-1 text-sm text-muted-foreground">{formatFullDate(node.date)}</div>
               )}
+              {node.balanceBefore !== undefined && node.balanceAfter !== undefined && (
+                <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-3">
+                  <div>
+                    <div className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
+                      Before
+                    </div>
+                    <div className="num text-base font-semibold">
+                      {formatMoney(node.balanceBefore, currency)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
+                      After
+                    </div>
+                    <div
+                      className={
+                        node.balanceAfter >= node.balanceBefore
+                          ? "num text-base font-semibold text-income"
+                          : "num text-base font-semibold text-expense"
+                      }
+                    >
+                      {formatMoney(node.balanceAfter, currency)}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
 
             {single ? (
               <TransactionDetail

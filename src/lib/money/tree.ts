@@ -30,7 +30,12 @@ export interface TreeNode {
   txIds: string[];
   children: TreeNode[];
   collapsedByDefault?: boolean | undefined;
+  /** Running balance before this node's money movement. */
+  balanceBefore?: number | undefined;
+  /** Running balance after this node's money movement. */
+  balanceAfter?: number | undefined;
 }
+
 
 export interface PositionedNode extends TreeNode {
   x: number;
@@ -48,13 +53,37 @@ export interface Edge {
   dashed?: boolean | undefined;
 }
 
-export const NODE_W = 176;
-export const NODE_H = 66;
+export const NODE_W = 186;
+export const NODE_H = 100;
 const GAP_X = 26;
 const GAP_Y = 108;
 
-function txNode(t: Transaction): TreeNode {
+type BalanceMap = Map<string, { before: number; after: number }>;
+
+/** Chronological running balance for a single day, starting from its opening balance. */
+function dayBalances(opening: number, txs: Transaction[]): BalanceMap {
+  const map: BalanceMap = new Map();
+  let running = opening;
+  sortTx(txs).forEach((t) => {
+    const before = running;
+    running += t.type === "income" ? t.amount : -t.amount;
+    map.set(t.id, { before, after: running });
+  });
+  return map;
+}
+
+function spanBalance(ids: string[], balances: BalanceMap, fallback: number) {
+  const entries = ids.map((id) => balances.get(id)).filter(Boolean) as {
+    before: number;
+    after: number;
+  }[];
+  if (!entries.length) return { before: fallback, after: fallback };
+  return { before: entries[0]!.before, after: entries[entries.length - 1]!.after };
+}
+
+function txNode(t: Transaction, balances: BalanceMap): TreeNode {
   const def = categoryDef(t.category);
+  const b = balances.get(t.id);
   return {
     id: `tx-${t.id}`,
     kind: "transaction",
@@ -68,14 +97,27 @@ function txNode(t: Transaction): TreeNode {
     txId: t.id,
     txIds: [t.id],
     children: [],
+    balanceBefore: b?.before,
+    balanceAfter: b?.after,
   };
 }
 
-function categoryNodes(txs: Transaction[], keyPrefix: string, type: "expense" | "income") {
+function categoryNodes(
+  txs: Transaction[],
+  keyPrefix: string,
+  type: "expense" | "income",
+  balances: BalanceMap,
+  fallback: number,
+) {
   return categoryTotals(txs, type).map((c) => {
     const items = sortTx(txs.filter((t) => t.type === type && t.category === c.category));
     const total = sum(txs.filter((t) => t.type === type).map((t) => t.amount));
     const def = categoryDef(c.category);
+    const span = spanBalance(
+      items.map((t) => t.id),
+      balances,
+      fallback,
+    );
     return {
       id: `${keyPrefix}-cat-${c.category}`,
       kind: "category" as NodeKind,
@@ -86,8 +128,10 @@ function categoryNodes(txs: Transaction[], keyPrefix: string, type: "expense" | 
       sublabel: total > 0 ? `${Math.round((c.total / total) * 100)}% · ${c.count} tx` : undefined,
       category: c.category,
       txIds: items.map((t) => t.id),
-      children: items.map(txNode),
+      children: items.map((t) => txNode(t, balances)),
       collapsedByDefault: items.length > 3,
+      balanceBefore: span.before,
+      balanceAfter: span.after,
     };
   });
 }
@@ -99,8 +143,14 @@ function dateNode(
   const children: TreeNode[] = [];
   const incomeTx = day.transactions.filter((t) => t.type === "income");
   const expenseTx = day.transactions.filter((t) => t.type === "expense");
+  const balances = dayBalances(day.opening, day.transactions);
 
   if (incomeTx.length) {
+    const span = spanBalance(
+      sortTx(incomeTx).map((t) => t.id),
+      balances,
+      day.opening,
+    );
     children.push({
       id: `${day.date}-income`,
       kind: "income",
@@ -111,11 +161,18 @@ function dateNode(
       sublabel: `${incomeTx.length} source${incomeTx.length > 1 ? "s" : ""}`,
       date: day.date,
       txIds: incomeTx.map((t) => t.id),
-      children: categoryNodes(incomeTx, `${day.date}-in`, "income"),
+      children: categoryNodes(incomeTx, `${day.date}-in`, "income", balances, day.opening),
+      balanceBefore: span.before,
+      balanceAfter: span.after,
     });
   }
 
   if (expenseTx.length) {
+    const span = spanBalance(
+      sortTx(expenseTx).map((t) => t.id),
+      balances,
+      day.closing,
+    );
     children.push({
       id: `${day.date}-spent`,
       kind: "spent",
@@ -126,7 +183,9 @@ function dateNode(
       sublabel: `${expenseTx.length} transaction${expenseTx.length > 1 ? "s" : ""}`,
       date: day.date,
       txIds: expenseTx.map((t) => t.id),
-      children: categoryNodes(expenseTx, `${day.date}-out`, "expense"),
+      children: categoryNodes(expenseTx, `${day.date}-out`, "expense", balances, day.closing),
+      balanceBefore: span.before,
+      balanceAfter: span.after,
     });
   }
 
@@ -141,6 +200,8 @@ function dateNode(
     date: day.date,
     txIds: [],
     children: [],
+    balanceBefore: day.opening,
+    balanceAfter: day.closing,
   });
 
   return {
@@ -154,8 +215,11 @@ function dateNode(
     txIds: day.transactions.map((t) => t.id),
     children,
     collapsedByDefault: view === "month" || view === "year",
+    balanceBefore: day.opening,
+    balanceAfter: day.closing,
   };
 }
+
 
 export interface BuildOptions {
   view: ViewMode;
@@ -197,6 +261,8 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
           txIds: list.flatMap((d) => d.transactions.map((t) => t.id)),
           children: list.map((d) => dateNode(d, opts.view)),
           collapsedByDefault: true,
+          balanceBefore: list[0]!.opening,
+          balanceAfter: list[list.length - 1]!.closing,
         });
       });
   } else {
@@ -214,8 +280,11 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
       sublabel: "projected estimate",
       txIds: [],
       children: [],
+      balanceBefore: scoped.length ? scoped[scoped.length - 1]!.closing : state.startingBalance,
+      balanceAfter: opts.projection.balance,
     });
   }
+
 
   return {
     id: "root",
@@ -227,7 +296,10 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     sublabel: opts.view === "day" ? "opening balance" : "beginning of period",
     txIds: [],
     children,
+    balanceBefore: rootAmount,
+    balanceAfter: scoped.length ? scoped[scoped.length - 1]!.closing : rootAmount,
   };
+
 }
 
 export function layoutTree(root: TreeNode, collapsed: Set<string>) {
