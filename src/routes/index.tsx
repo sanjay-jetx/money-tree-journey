@@ -116,10 +116,10 @@ function TreePage() {
   const hasData = state.transactions.length > 0;
 
   return (
-    <div className="space-y-4 p-4 lg:p-6">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold lg:text-3xl">Your money tree</h1>
+          <h1 className="text-2xl font-semibold tracking-tight lg:text-3xl">Your money tree</h1>
           <p className="text-sm text-muted-foreground">
             {ready ? formatMoney(currentBalance(state), state.currency) : "—"} growing across{" "}
             {state.transactions.length} entries · {formatFullDate(range.from)} →{" "}
@@ -135,16 +135,18 @@ function TreePage() {
 
       <StatsBar />
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex rounded-xl border border-border bg-surface/70 p-1">
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div className="flex rounded-2xl bg-secondary/70 p-1">
           {VIEWS.map((v) => (
             <button
               key={v}
               type="button"
               onClick={() => setView(v)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-semibold capitalize transition-colors",
-                view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                "rounded-xl px-3.5 py-1.5 text-xs font-semibold capitalize transition-all",
+                view === v
+                  ? "bg-primary text-primary-foreground shadow-[var(--shadow-node)]"
+                  : "text-secondary-foreground hover:text-primary",
               )}
             >
               {v}
@@ -152,7 +154,7 @@ function TreePage() {
           ))}
         </div>
 
-        <div className="flex items-center gap-1 rounded-xl border border-border bg-surface/70 p-1">
+        <div className="flex items-center gap-1 rounded-2xl bg-secondary/70 p-1">
           <Button variant="ghost" size="icon" onClick={() => shift(-1)} aria-label="Previous period">
             <ChevronLeft className="size-4" />
           </Button>
@@ -264,14 +266,14 @@ function TreePage() {
           </PopoverContent>
         </Popover>
 
-        <label className="flex items-center gap-2 rounded-xl border border-border bg-surface/70 px-3 py-2 text-xs text-muted-foreground">
+        <label className="flex items-center gap-2 rounded-2xl bg-secondary/70 px-3.5 py-2 text-xs font-medium text-secondary-foreground">
           <Switch checked={showProjection} onCheckedChange={setShowProjection} />
           Forecast branch
         </label>
       </div>
 
       {!ready ? (
-        <div className="h-[560px] animate-pulse rounded-3xl border border-border bg-surface/40" />
+        <div className="h-[560px] animate-pulse rounded-3xl bg-secondary/50" />
       ) : hasData ? (
         <TreeCanvas
           root={root}
@@ -285,7 +287,7 @@ function TreePage() {
           className="h-[560px] lg:h-[640px]"
         />
       ) : (
-        <div className="canvas-grain flex h-[520px] flex-col items-center justify-center gap-4 rounded-3xl border border-border text-center">
+        <div className="canvas-grain flex h-[520px] flex-col items-center justify-center gap-4 rounded-3xl text-center shadow-[var(--shadow-node)]">
           <div className="text-5xl">🌱</div>
           <h2 className="text-xl font-semibold">Your money story starts here.</h2>
           <p className="max-w-sm text-sm text-muted-foreground">

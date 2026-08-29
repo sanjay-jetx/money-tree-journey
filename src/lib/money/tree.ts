@@ -55,8 +55,8 @@ export interface Edge {
 
 export const NODE_W = 186;
 export const NODE_H = 108;
-const GAP_X = 26;
-const GAP_Y = 108;
+const GAP_X = 34;
+const GAP_Y = 120;
 
 type BalanceMap = Map<string, { before: number; after: number }>;
 

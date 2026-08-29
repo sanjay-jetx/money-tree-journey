@@ -33,7 +33,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </Link>
 
-        <div className="mt-7 rounded-2xl border border-sidebar-border bg-surface-2/60 p-4">
+        <div className="mt-7 rounded-2xl bg-secondary/70 p-4">
           <div className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
             Current balance
           </div>
