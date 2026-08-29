@@ -189,7 +189,7 @@ export function TreeCanvas({
                 key={edge.id}
                 d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`}
                 fill="none"
-                stroke={toneStroke[edge.tone]}
+                stroke={edgeStrokeColor(edge)}
                 strokeOpacity={0.62}
                 strokeWidth={2.8}
                 strokeLinecap="round"
@@ -220,7 +220,7 @@ export function TreeCanvas({
                 }}
                 className={cn(
                   "animate-grow-in w-full rounded-[20px] border-[1.5px] px-4 py-3 text-left shadow-[var(--shadow-node)] transition-all duration-200",
-                  toneStyles[node.tone],
+                  nodeToneClasses(node),
                   selectedId === node.id &&
                     "ring-[3px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_18px_40px_-14px_var(--glow)]",
                   dimmed
