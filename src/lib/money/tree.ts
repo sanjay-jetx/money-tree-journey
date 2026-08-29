@@ -301,6 +301,30 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     });
   }
 
+/**
+ * Removes pass-through branches: a node whose single child carries the same amount
+ * adds no information, so the child is merged into the parent.
+ */
+function collapseRedundant(node: TreeNode): TreeNode {
+  const children = node.children.map(collapseRedundant);
+  if (children.length === 1) {
+    const only = children[0]!;
+    const mergeable =
+      only.amount === node.amount &&
+      (node.kind === "income" || node.kind === "spent" || node.kind === "category");
+    if (mergeable) {
+      return {
+        ...node,
+        sublabel: only.sublabel ?? node.sublabel,
+        children: only.children,
+        balanceBefore: node.balanceBefore,
+        balanceAfter: node.balanceAfter,
+      };
+    }
+  }
+  return { ...node, children };
+}
+
 
   return collapseRedundant({
     id: "root",
