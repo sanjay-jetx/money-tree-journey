@@ -30,7 +30,12 @@ export interface TreeNode {
   txIds: string[];
   children: TreeNode[];
   collapsedByDefault?: boolean | undefined;
+  /** Running balance before this node's money movement. */
+  balanceBefore?: number | undefined;
+  /** Running balance after this node's money movement. */
+  balanceAfter?: number | undefined;
 }
+
 
 export interface PositionedNode extends TreeNode {
   x: number;
