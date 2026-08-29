@@ -257,16 +257,39 @@ export function TreeCanvas({
       </div>
 
       {hovered && (
-        <div className="glass-panel pointer-events-none absolute top-4 left-4 max-w-[240px] rounded-xl px-3 py-2 text-xs">
+        <div className="glass-panel pointer-events-none absolute top-4 left-4 max-w-[260px] rounded-xl px-3 py-2 text-xs">
           <div className="font-semibold">{hovered.label}</div>
           <div className="num text-sm">{formatMoney(hovered.amount, currency)}</div>
-          <div className="text-muted-foreground">
+          {hovered.balanceBefore !== undefined && hovered.balanceAfter !== undefined && (
+            <div className="mt-1.5 flex items-center gap-2 border-t border-border/40 pt-1.5">
+              <div className="flex flex-col">
+                <span className="text-[9px] tracking-wider text-muted-foreground uppercase">Before</span>
+                <span className="num text-[11px] font-semibold">
+                  {formatMoney(hovered.balanceBefore, currency)}
+                </span>
+              </div>
+              <ArrowRight className="size-3 text-muted-foreground" />
+              <div className="flex flex-col">
+                <span className="text-[9px] tracking-wider text-muted-foreground uppercase">After</span>
+                <span
+                  className={cn(
+                    "num text-[11px] font-semibold",
+                    hovered.balanceAfter >= hovered.balanceBefore ? "text-income" : "text-expense",
+                  )}
+                >
+                  {formatMoney(hovered.balanceAfter, currency)}
+                </span>
+              </div>
+            </div>
+          )}
+          <div className="mt-1 text-muted-foreground">
             {hovered.hasChildren
               ? `${hovered.children.length} branches · double-click to ${hovered.collapsed ? "expand" : "collapse"}`
               : "click for details"}
           </div>
         </div>
       )}
+
 
       <div className="glass-panel absolute right-4 bottom-4 flex items-center gap-1 rounded-xl p-1">
         <IconBtn onClick={() => zoom(-1)} label="Zoom out">
