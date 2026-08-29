@@ -166,15 +166,16 @@
 
 @utility canvas-grain {
   background-image:
-    radial-gradient(circle at 20% 10%, color-mix(in oklab, #8b5cf6 10%, transparent), transparent 55%),
-    radial-gradient(circle at 82% 82%, color-mix(in oklab, #4caf6a 11%, transparent), transparent 58%);
+    radial-gradient(circle at 18% 8%, color-mix(in oklab, #8b5cf6 8%, transparent), transparent 55%),
+    radial-gradient(circle at 84% 84%, color-mix(in oklab, #4caf6a 9%, transparent), transparent 58%);
   background-color: var(--color-canvas);
 }
 
 @utility glass-panel {
-  background-color: color-mix(in oklab, var(--color-surface) 88%, transparent);
+  background-color: color-mix(in oklab, var(--color-surface) 90%, transparent);
   backdrop-filter: blur(14px);
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-node);
 }
 
@@ -183,13 +184,15 @@
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-node);
   transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
 
   &:hover {
     box-shadow: var(--shadow-glow);
+    transform: translateY(-2px);
   }
 }
+
 
 @utility num {
   font-family: var(--font-mono);
