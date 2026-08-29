@@ -118,6 +118,21 @@ function categoryNodes(
       balances,
       fallback,
     );
+
+    // Single-transaction category: no point in a wrapper branch — show the leaf itself.
+    if (items.length === 1) {
+      const only = items[0]!;
+      const leaf = txNode(only, balances);
+      return {
+        ...leaf,
+        id: `${keyPrefix}-cat-${c.category}`,
+        label: c.category,
+        icon: def.icon,
+        sublabel: [only.subcategory || only.description, only.time].filter(Boolean).join(" · "),
+        children: [],
+      };
+    }
+
     return {
       id: `${keyPrefix}-cat-${c.category}`,
       kind: "category" as NodeKind,
@@ -134,6 +149,7 @@ function categoryNodes(
       balanceAfter: type === "income" ? span.before + c.total : span.before - c.total,
     };
   });
+
 }
 
 function dateNode(
@@ -285,8 +301,32 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     });
   }
 
+/**
+ * Removes pass-through branches: a node whose single child carries the same amount
+ * adds no information, so the child is merged into the parent.
+ */
+function collapseRedundant(node: TreeNode): TreeNode {
+  const children = node.children.map(collapseRedundant);
+  if (children.length === 1) {
+    const only = children[0]!;
+    const mergeable =
+      only.amount === node.amount &&
+      (node.kind === "income" || node.kind === "spent" || node.kind === "category");
+    if (mergeable) {
+      return {
+        ...node,
+        sublabel: only.sublabel ?? node.sublabel,
+        children: only.children,
+        balanceBefore: node.balanceBefore,
+        balanceAfter: node.balanceAfter,
+      };
+    }
+  }
+  return { ...node, children };
+}
 
-  return {
+
+  return collapseRedundant({
     id: "root",
     kind: "root",
     tone: "balance",
@@ -298,7 +338,8 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     children,
     balanceBefore: rootAmount,
     balanceAfter: scoped.length ? scoped[scoped.length - 1]!.closing : rootAmount,
-  };
+  });
+
 
 }
 
