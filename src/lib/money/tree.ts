@@ -302,7 +302,7 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
   }
 
 
-  return {
+  return collapseRedundant({
     id: "root",
     kind: "root",
     tone: "balance",
@@ -314,7 +314,8 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     children,
     balanceBefore: rootAmount,
     balanceAfter: scoped.length ? scoped[scoped.length - 1]!.closing : rootAmount,
-  };
+  });
+
 
 }
 
