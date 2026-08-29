@@ -9,15 +9,15 @@ export interface Transaction {
   type: TxType;
   amount: number;
   category: string;
-  subcategory?: string;
-  description?: string;
-  merchant?: string;
+  subcategory?: string | undefined;
+  description?: string | undefined;
+  merchant?: string | undefined;
   paymentMethod: PaymentMethod;
   /** ISO date, yyyy-MM-dd */
   date: string;
   /** 24h clock, HH:mm */
   time: string;
-  notes?: string;
+  notes?: string | undefined;
   createdAt: string;
 }
 
@@ -27,7 +27,7 @@ export interface Debt {
   amount: number;
   date: string;
   direction: DebtDirection;
-  reason?: string;
+  reason?: string | undefined;
   status: DebtStatus;
 }
 
