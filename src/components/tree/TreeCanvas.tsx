@@ -136,7 +136,7 @@ export function TreeCanvas({
     <div
       ref={containerRef}
       className={cn(
-        "canvas-grain relative touch-none overflow-hidden rounded-3xl border border-border select-none",
+        "canvas-grain relative touch-none overflow-hidden rounded-3xl shadow-[var(--shadow-node)] select-none",
         className,
       )}
       onPointerDown={onPointerDown}
@@ -170,8 +170,8 @@ export function TreeCanvas({
                 d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`}
                 fill="none"
                 stroke={toneStroke[edge.tone]}
-                strokeOpacity={0.55}
-                strokeWidth={2}
+                strokeOpacity={0.5}
+                strokeWidth={2.4}
                 strokeLinecap="round"
                 className={edge.dashed ? "flow-line" : undefined}
               />
@@ -199,10 +199,12 @@ export function TreeCanvas({
                   onContextAction?.({ node, x: e.clientX, y: e.clientY });
                 }}
                 className={cn(
-                  "animate-grow-in w-full rounded-2xl border px-3 py-2.5 text-left shadow-[var(--shadow-node)] backdrop-blur-sm transition-all",
+                  "animate-grow-in w-full rounded-2xl border px-3.5 py-2.5 text-left shadow-[var(--shadow-node)] transition-all duration-200",
                   toneStyles[node.tone],
                   selectedId === node.id && "ring-2 ring-ring ring-offset-2 ring-offset-canvas",
-                  dimmed ? "opacity-25" : "hover:-translate-y-0.5",
+                  dimmed
+                    ? "opacity-25"
+                    : "hover:-translate-y-0.5 hover:shadow-[var(--shadow-glow)]",
                 )}
                 style={{ height: NODE_H }}
               >
@@ -246,7 +248,7 @@ export function TreeCanvas({
                   data-node
                   onClick={() => onToggle(node.id)}
                   aria-label={node.collapsed ? "Expand branch" : "Collapse branch"}
-                  className="absolute -bottom-3 left-1/2 z-10 flex h-6 min-w-6 -translate-x-1/2 items-center justify-center gap-0.5 rounded-full border border-border bg-surface px-1.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                  className="absolute -bottom-3 left-1/2 z-10 flex h-6 min-w-6 -translate-x-1/2 items-center justify-center gap-0.5 rounded-full border border-border bg-surface px-1.5 text-[10px] font-semibold text-muted-foreground shadow-[var(--shadow-node)] transition-colors hover:bg-secondary hover:text-primary"
                 >
                   {node.collapsed ? `+${node.children.length}` : "−"}
                 </button>
