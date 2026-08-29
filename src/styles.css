@@ -73,8 +73,8 @@
   --radius: 1.25rem;
 
 
-  /* bright content area against the deep blue sidebar */
-  --background: #f8fafc;
+  /* rich dark blue content area behind white cards */
+  --background: #0b2a4a;
   --foreground: #111827;
   --canvas: #ffffff;
   --surface: #ffffff;
@@ -147,7 +147,7 @@
 }
 
 .light {
-  --background: #f8fafc;
+  --background: #0b2a4a;
   --canvas: #ffffff;
   --surface-2: #f1f5f9;
   --sidebar: #0b3d91;
