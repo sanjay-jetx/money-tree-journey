@@ -261,6 +261,8 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
           txIds: list.flatMap((d) => d.transactions.map((t) => t.id)),
           children: list.map((d) => dateNode(d, opts.view)),
           collapsedByDefault: true,
+          balanceBefore: list[0]!.opening,
+          balanceAfter: list[list.length - 1]!.closing,
         });
       });
   } else {
@@ -278,8 +280,11 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
       sublabel: "projected estimate",
       txIds: [],
       children: [],
+      balanceBefore: scoped.length ? scoped[scoped.length - 1]!.closing : state.startingBalance,
+      balanceAfter: opts.projection.balance,
     });
   }
+
 
   return {
     id: "root",
