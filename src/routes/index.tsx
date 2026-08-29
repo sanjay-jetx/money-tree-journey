@@ -119,7 +119,7 @@ function TreePage() {
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight lg:text-3xl">Your money tree</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white lg:text-3xl">Your money tree</h1>
           <p className="text-sm text-muted-foreground">
             {ready ? formatMoney(currentBalance(state), state.currency) : "—"} growing across{" "}
             {state.transactions.length} entries · {formatFullDate(range.from)} →{" "}
