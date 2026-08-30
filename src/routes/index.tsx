@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { addDays, addMonths, addYears, format, parseISO, subDays } from "date-fns";
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { addDays, addMonths, addYears, format, parseISO, startOfWeek, subDays } from "date-fns";
+import { CalendarCheck, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { StatsBar } from "@/components/dashboard/StatsBar";
 import { NodeDetailPanel } from "@/components/tree/NodeDetailPanel";
 import { ColorLegend } from "@/components/tree/ColorLegend";
@@ -23,10 +23,50 @@ import {
 import { forecast } from "@/lib/money/calc";
 import { useMoney } from "@/lib/money/store";
 import { buildTree, defaultCollapsed, layoutTree } from "@/lib/money/tree";
-import type { PositionedNode } from "@/lib/money/tree";
+import type { TreeNode, PositionedNode } from "@/lib/money/tree";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS } from "@/lib/money/types";
 import type { ViewMode } from "@/lib/money/types";
 import { cn } from "@/lib/utils";
+
+/**
+ * Builds the initial collapsed set for the year view so that today's
+ * month → week → day path is pre-expanded while everything else stays
+ * collapsed as before.
+ */
+function todayFocusCollapsed(root: TreeNode, today: string): Set<string> {
+  const set = defaultCollapsed(root);
+  if (root.kind !== "root") return set;
+
+  const todayMonth = today.slice(0, 7); // "YYYY-MM"
+  const todayWeekStart = format(
+    startOfWeek(parseISO(today), { weekStartsOn: 1 }),
+    ISO,
+  );
+
+  for (const monthNode of root.children) {
+    if (monthNode.kind !== "month") continue;
+    const nodeMonth = monthNode.date?.slice(0, 7);
+    if (nodeMonth !== todayMonth) continue;
+    // Expand today's month
+    set.delete(monthNode.id);
+    for (const weekNode of monthNode.children) {
+      if (weekNode.kind !== "week") continue;
+      if (weekNode.date && format(
+        startOfWeek(parseISO(weekNode.date), { weekStartsOn: 1 }),
+        ISO,
+      ) !== todayWeekStart) continue;
+      // Expand today's week
+      set.delete(weekNode.id);
+      for (const dayNode of weekNode.children) {
+        if (dayNode.kind === "date" && dayNode.date === today) {
+          // Expand today's day node
+          set.delete(dayNode.id);
+        }
+      }
+    }
+  }
+  return set;
+}
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,6 +94,7 @@ function TreePage() {
   const { state, ready, view, setView, anchorDate, setAnchorDate, filters, setFilters, resetFilters } =
     useMoney();
   const { openDialog } = useTxDialog();
+  const today = useMemo(() => format(new Date(), ISO), []);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<PositionedNode | null>(null);
   const [menu, setMenu] = useState<ContextAction | null>(null);
@@ -74,8 +115,12 @@ function TreePage() {
     [state, view, range.from, range.to, filteredTx, projection],
   );
 
+  const focusToday = useCallback(() => {
+    setCollapsed(view === "year" ? todayFocusCollapsed(root, today) : defaultCollapsed(root));
+  }, [root, view, today]);
+
   useEffect(() => {
-    setCollapsed(defaultCollapsed(root));
+    focusToday();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, range.from, range.to]);
 
@@ -169,6 +214,16 @@ function TreePage() {
             <ChevronRight className="size-4" />
           </Button>
         </div>
+
+        <Button
+          variant="secondary"
+          className="gap-1.5"
+          onClick={focusToday}
+          title="Expand today's branch"
+        >
+          <CalendarCheck className="size-4" />
+          Today
+        </Button>
 
         <div className="relative min-w-[180px] flex-1">
           <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
