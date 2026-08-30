@@ -83,6 +83,29 @@ export function TreeCanvas({
     [root, collapsed],
   );
 
+  const activeId = hovered?.id ?? selectedId ?? null;
+
+  const { activePathIds, activeEdgeIds } = useMemo(() => {
+    const pathIds = new Set<string>();
+    const edgeIds = new Set<string>();
+    if (!activeId) return { activePathIds: pathIds, activeEdgeIds: edgeIds };
+    const parentEdge = new Map<string, Edge>();
+    for (const e of edges) parentEdge.set(e.to.id, e);
+    let cursor: string | undefined = activeId;
+    while (cursor) {
+      pathIds.add(cursor);
+      const e = parentEdge.get(cursor);
+      if (!e) break;
+      edgeIds.add(e.id);
+      cursor = e.from.id;
+    }
+    // include edges to the active node's direct children for context
+    for (const e of edges) if (e.from.id === activeId) edgeIds.add(e.id);
+    return { activePathIds: pathIds, activeEdgeIds: edgeIds };
+  }, [activeId, edges]);
+
+
+
   const center = useCallback(
     (scale?: number) => {
       const el = containerRef.current;
