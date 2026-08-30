@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur lg:hidden">
         <Link to="/" className="flex items-center gap-2">
           <span className="text-xl">🌳</span>
-          <span className="font-display font-semibold text-white">MoneyTree</span>
+          <span className="font-display font-semibold text-foreground">MoneyTree</span>
         </Link>
         <div className="flex items-center gap-2">
           <span className="num text-sm text-balance">
