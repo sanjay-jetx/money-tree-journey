@@ -142,11 +142,65 @@
   --sidebar-border: #43311f;
 }
 
-.light {
-  --background: #ece5da;
-  --canvas: #fffdf9;
-  --surface-2: #f4efe6;
-  --sidebar: #2b1f16;
+/* Dark espresso theme */
+.dark {
+  --background: #17110c;
+  --foreground: #f4ece1;
+  --canvas: #1d1611;
+  --surface: #241b14;
+  --surface-2: #2c211a;
+  --card: #241b14;
+  --card-foreground: #f4ece1;
+  --popover: #241b14;
+  --popover-foreground: #f4ece1;
+
+  --primary: #d08c3c;
+  --primary-foreground: #1a120c;
+  --secondary: #2c211a;
+  --secondary-foreground: #e8b978;
+  --muted: #2c211a;
+  --muted-foreground: #b3a291;
+  --accent: #3a2a1d;
+  --accent-foreground: #e8b978;
+  --destructive: #d4644a;
+  --destructive-foreground: #1a120c;
+
+  --border: #38291d;
+  --input: #453325;
+  --ring: #d08c3c;
+  --glow: color-mix(in oklab, #d08c3c 30%, transparent);
+
+  --income: #7bb07b;
+  --income-soft: #26331f;
+  --expense: #e07a5f;
+  --expense-soft: #3a231c;
+  --balance: #7fb0c4;
+  --balance-soft: #1e2c33;
+  --pending: #e3b455;
+  --pending-soft: #3a2c15;
+  --debt: #e07a5f;
+  --forecast: #c9a06a;
+
+  --node-root: #d08c3c;
+  --node-root-text: #1a120c;
+  --node-root-soft: color-mix(in oklab, #d08c3c 22%, #17110c);
+  --node-primary: #4a3627;
+  --node-primary-text: #fdf6ec;
+  --node-primary-soft: color-mix(in oklab, #4a3627 40%, #17110c);
+  --node-standard: #7a6148;
+  --node-standard-text: #fdf6ec;
+  --node-standard-soft: color-mix(in oklab, #7a6148 32%, #17110c);
+  --node-secondary: #c9b79c;
+  --node-secondary-text: #2a1f16;
+  --node-secondary-soft: color-mix(in oklab, #c9b79c 26%, #17110c);
+  --node-edge: #8a7157;
+
+  --sidebar: #120d09;
+  --sidebar-foreground: #f7efe4;
+  --sidebar-muted: #b9a894;
+  --sidebar-surface: #241b14;
+  --sidebar-accent: #d08c3c;
+  --sidebar-border: #33251a;
 }
 
 
