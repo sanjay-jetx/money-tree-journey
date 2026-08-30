@@ -83,6 +83,29 @@ export function TreeCanvas({
     [root, collapsed],
   );
 
+  const activeId = hovered?.id ?? selectedId ?? null;
+
+  const { activePathIds, activeEdgeIds } = useMemo(() => {
+    const pathIds = new Set<string>();
+    const edgeIds = new Set<string>();
+    if (!activeId) return { activePathIds: pathIds, activeEdgeIds: edgeIds };
+    const parentEdge = new Map<string, Edge>();
+    for (const e of edges) parentEdge.set(e.to.id, e);
+    let cursor: string | undefined = activeId;
+    while (cursor) {
+      pathIds.add(cursor);
+      const e = parentEdge.get(cursor);
+      if (!e) break;
+      edgeIds.add(e.id);
+      cursor = e.from.id;
+    }
+    // include edges to the active node's direct children for context
+    for (const e of edges) if (e.from.id === activeId) edgeIds.add(e.id);
+    return { activePathIds: pathIds, activeEdgeIds: edgeIds };
+  }, [activeId, edges]);
+
+
+
   const center = useCallback(
     (scale?: number) => {
       const el = containerRef.current;
@@ -179,35 +202,55 @@ export function TreeCanvas({
           width={width}
           height={height + NODE_H}
         >
-          {edges.map((edge) => {
-            const x1 = edge.from.x + NODE_W / 2;
-            const y1 = edge.from.y + NODE_H;
-            const x2 = edge.to.x + NODE_W / 2;
-            const y2 = edge.to.y;
-            const mid = (y1 + y2) / 2;
-            return (
-              <path
-                key={edge.id}
-                d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`}
-                fill="none"
-                stroke={edgeStrokeColor(edge)}
-                strokeOpacity={0.62}
-                strokeWidth={2.8}
-                strokeLinecap="round"
-                className={edge.dashed ? "flow-line" : undefined}
-              />
-            );
-          })}
+          {[...edges]
+            .sort(
+              (a, b) =>
+                Number(activeEdgeIds.has(a.id)) - Number(activeEdgeIds.has(b.id)),
+            )
+            .map((edge) => {
+              const x1 = edge.from.x + NODE_W / 2;
+              const y1 = edge.from.y + NODE_H;
+              const x2 = edge.to.x + NODE_W / 2;
+              const y2 = edge.to.y;
+              const mid = (y1 + y2) / 2;
+              const onPath = activeEdgeIds.has(edge.id);
+              const faded = Boolean(activeId) && !onPath;
+              return (
+                <path
+                  key={edge.id}
+                  d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`}
+                  fill="none"
+                  stroke={onPath ? "var(--primary)" : edgeStrokeColor(edge)}
+                  strokeOpacity={onPath ? 1 : faded ? 0.16 : 0.62}
+                  strokeWidth={onPath ? 4.4 : 2.8}
+                  strokeLinecap="round"
+                  className={cn(
+                    "transition-all duration-200",
+                    edge.dashed && "flow-line",
+                  )}
+                  style={
+                    onPath
+                      ? { filter: "drop-shadow(0 0 6px var(--glow))" }
+                      : undefined
+                  }
+                />
+              );
+            })}
+
         </svg>
 
         {nodes.map((node) => {
           const dimmed = highlightIds && highlightIds.size > 0 && !highlightIds.has(node.id);
+          const onPath = activePathIds.has(node.id);
+          const isHovered = hovered?.id === node.id;
+          const isSelected = selectedId === node.id;
+          const muted = Boolean(activeId) && !onPath;
           return (
             <div
               key={node.id}
               data-node
               className="absolute"
-              style={{ left: node.x, top: node.y, width: NODE_W }}
+              style={{ left: node.x, top: node.y, width: NODE_W, zIndex: onPath ? 5 : 1 }}
             >
               <button
                 type="button"
@@ -222,13 +265,19 @@ export function TreeCanvas({
                 className={cn(
                   "animate-grow-in w-full rounded-[20px] border-[1.5px] px-4 py-3 text-left shadow-[var(--shadow-node)] transition-all duration-200",
                   nodeToneClasses(node),
-                  selectedId === node.id &&
+                  onPath && !isSelected && !isHovered && "ring-2 ring-primary/55 ring-offset-2 ring-offset-canvas",
+                  isHovered &&
+                    "-translate-y-1.5 scale-[1.03] ring-2 ring-primary/80 ring-offset-2 ring-offset-canvas shadow-[var(--shadow-glow)]",
+                  isSelected &&
                     "ring-[3px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_18px_40px_-14px_var(--glow)]",
                   dimmed
                     ? "opacity-20"
-                    : "hover:-translate-y-1 hover:shadow-[var(--shadow-glow)]",
+                    : muted
+                      ? "opacity-45 saturate-50"
+                      : "hover:-translate-y-1 hover:shadow-[var(--shadow-glow)]",
                 )}
                 style={{ height: NODE_H }}
+
               >
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase opacity-90">
                   {node.icon && <span className="text-xs">{node.icon}</span>}
