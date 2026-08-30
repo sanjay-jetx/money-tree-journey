@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
+import { accentVars } from "./accent";
+import type { AccentName } from "./accent";
 import { balanceOn, formatMoney, todayISO } from "./calc";
 import { createDemoState, createEmptyState } from "./demo";
 import { EMPTY_FILTERS } from "./types";
