@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-
 import { useEffect, useMemo, useState } from "react";
 import { StatsBar } from "@/components/dashboard/StatsBar";
 import { NodeDetailPanel } from "@/components/tree/NodeDetailPanel";
+import { ColorLegend } from "@/components/tree/ColorLegend";
 import { TreeCanvas } from "@/components/tree/TreeCanvas";
 import type { ContextAction } from "@/components/tree/TreeCanvas";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
