@@ -70,7 +70,9 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.classList.toggle("dark", state.theme === "dark");
     root.style.colorScheme = state.theme;
-  }, [state.theme]);
+    const vars = accentVars(state.accent, state.accentIntensity, state.theme);
+    for (const [key, val] of Object.entries(vars)) root.style.setProperty(key, val);
+  }, [state.theme, state.accent, state.accentIntensity]);
 
   const setFilters = useCallback((next: Partial<Filters>) => {
     setFiltersState((prev) => ({ ...prev, ...next }));
