@@ -179,25 +179,41 @@ export function TreeCanvas({
           width={width}
           height={height + NODE_H}
         >
-          {edges.map((edge) => {
-            const x1 = edge.from.x + NODE_W / 2;
-            const y1 = edge.from.y + NODE_H;
-            const x2 = edge.to.x + NODE_W / 2;
-            const y2 = edge.to.y;
-            const mid = (y1 + y2) / 2;
-            return (
-              <path
-                key={edge.id}
-                d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`}
-                fill="none"
-                stroke={edgeStrokeColor(edge)}
-                strokeOpacity={0.62}
-                strokeWidth={2.8}
-                strokeLinecap="round"
-                className={edge.dashed ? "flow-line" : undefined}
-              />
-            );
-          })}
+          {[...edges]
+            .sort(
+              (a, b) =>
+                Number(activeEdgeIds.has(a.id)) - Number(activeEdgeIds.has(b.id)),
+            )
+            .map((edge) => {
+              const x1 = edge.from.x + NODE_W / 2;
+              const y1 = edge.from.y + NODE_H;
+              const x2 = edge.to.x + NODE_W / 2;
+              const y2 = edge.to.y;
+              const mid = (y1 + y2) / 2;
+              const onPath = activeEdgeIds.has(edge.id);
+              const faded = Boolean(activeId) && !onPath;
+              return (
+                <path
+                  key={edge.id}
+                  d={`M ${x1} ${y1} C ${x1} ${mid}, ${x2} ${mid}, ${x2} ${y2}`}
+                  fill="none"
+                  stroke={onPath ? "var(--primary)" : edgeStrokeColor(edge)}
+                  strokeOpacity={onPath ? 1 : faded ? 0.16 : 0.62}
+                  strokeWidth={onPath ? 4.4 : 2.8}
+                  strokeLinecap="round"
+                  className={cn(
+                    "transition-all duration-200",
+                    edge.dashed && "flow-line",
+                  )}
+                  style={
+                    onPath
+                      ? { filter: "drop-shadow(0 0 6px var(--glow))" }
+                      : undefined
+                  }
+                />
+              );
+            })}
+
         </svg>
 
         {nodes.map((node) => {
