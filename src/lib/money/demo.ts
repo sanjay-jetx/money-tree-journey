@@ -153,7 +153,7 @@ export function createDemoState(): MoneyState {
     currency: "₹",
     overdraft: false,
     isDemo: true,
-    theme: "dark",
+    theme: "light",
     transactions,
     debts,
   };
@@ -166,7 +166,7 @@ export function createEmptyState(): MoneyState {
     currency: "₹",
     overdraft: false,
     isDemo: false,
-    theme: "dark",
+    theme: "light",
     transactions: [],
     debts: [],
   };
