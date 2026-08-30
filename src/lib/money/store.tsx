@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { accentVars } from "./accent";
@@ -7,8 +7,11 @@ import { balanceOn, formatMoney, todayISO } from "./calc";
 import { createDemoState, createEmptyState } from "./demo";
 import { EMPTY_FILTERS } from "./types";
 import type { Debt, Filters, MoneyState, Transaction, ViewMode } from "./types";
+import { loadStateFn, saveStateFn } from "../../fns/dataFns";
 
 const STORAGE_KEY = "moneytree.state.v1";
+/** Debounce delay before writing to Supabase (ms) */
+const CLOUD_SAVE_DELAY = 1500;
 
 function newId(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -50,25 +53,66 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
   const [anchorDate, setAnchorDate] = useState<string>(() => todayISO());
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
 
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // ── Initial Load ─────────────────────────────────────────────────────────
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        setState({ ...createEmptyState(), ...(JSON.parse(raw) as MoneyState) });
-      } else {
-        setState(createDemoState());
+    async function boot() {
+      // 1. Show localStorage instantly (fast start)
+      let localState: MoneyState | null = null;
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) localState = { ...createEmptyState(), ...(JSON.parse(raw) as MoneyState) };
+      } catch { /* ignore */ }
+
+      if (localState) {
+        setState(localState);
+        setReady(true); // Unblock UI immediately
       }
-    } catch {
-      setState(createDemoState());
+
+      // 2. Try fetching fresh data from Supabase
+      try {
+        const result = await loadStateFn();
+        if (result.data) {
+          setState({ ...createEmptyState(), ...result.data });
+          // Update local cache with server data
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(result.data));
+        } else if (!localState) {
+          // No cloud data AND no local data — show demo
+          setState(createDemoState());
+        }
+      } catch (e) {
+        console.warn("Cloud load failed, using local data:", e);
+        if (!localState) setState(createDemoState());
+      }
+
+      setAnchorDate(todayISO());
+      setReady(true);
     }
-    setAnchorDate(todayISO());
-    setReady(true);
+
+    boot();
   }, []);
 
+  // ── Persist on Change ────────────────────────────────────────────────────
   useEffect(() => {
     if (!ready) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+    // Always update localStorage immediately (offline cache)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch { /* ignore quota errors */ }
+
+    // Debounced cloud save — wait 1.5s after last change
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await saveStateFn({ data: state });
+      } catch (e) {
+        console.warn("Cloud save failed (will retry on next change):", e);
+      }
+    }, CLOUD_SAVE_DELAY);
   }, [state, ready]);
+
 
   useEffect(() => {
     const root = document.documentElement;

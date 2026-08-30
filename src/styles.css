@@ -322,3 +322,25 @@
   stroke-dasharray: 4 8;
   animation: flow-dash 1.4s linear infinite;
 }
+
+@utility canvas-stage-smooth {
+  transition: transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+@utility canvas-stage-instant {
+  transition: none !important;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--glow);
+  }
+  50% {
+    box-shadow: 0 0 16px 3px var(--glow);
+  }
+}
+
+@utility animate-pulse-glow {
+  animation: pulse-glow 2.2s ease-in-out infinite;
+}

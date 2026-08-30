@@ -1,11 +1,12 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Moon, Plus, Sun } from "lucide-react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { LogOut, Moon, Plus, Sun } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
 import { currentBalance, formatMoney } from "@/lib/money/calc";
 import { useMoney } from "@/lib/money/store";
 import { cn } from "@/lib/utils";
+import { logoutFn } from "../../fns/authFns";
 
 const NAV = [
   { to: "/", label: "Money Tree", icon: "🌳" },
@@ -20,7 +21,15 @@ const NAV = [
 export function AppShell({ children }: { children: ReactNode }) {
   const { state, ready, toggleTheme } = useMoney();
   const { openDialog } = useTxDialog();
+  const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  async function handleLogout() {
+    try {
+      await logoutFn();
+    } catch { /* ignore */ }
+    await navigate({ to: "/login" });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -81,6 +90,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               Demo data
             </span>
           )}
+          <button
+            type="button"
+            onClick={handleLogout}
+            title="Sign out"
+            aria-label="Sign out"
+            className="flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-[11px] font-semibold text-sidebar-muted transition-all hover:bg-white/10 hover:text-red-400"
+          >
+            <LogOut className="size-3.5" />
+            Sign out
+          </button>
         </div>
       </aside>
 

@@ -1,4 +1,4 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
@@ -18,10 +18,19 @@ import type { Transaction } from "@/lib/money/types";
 
 interface Props {
   node: PositionedNode | null;
+  parentNode?: PositionedNode | null | undefined;
+  childNodes?: PositionedNode[] | undefined;
+  onSelectNode?: ((node: PositionedNode) => void) | undefined;
   onClose: () => void;
 }
 
-export function NodeDetailPanel({ node, onClose }: Props) {
+export function NodeDetailPanel({
+  node,
+  parentNode,
+  childNodes = [],
+  onSelectNode,
+  onClose,
+}: Props) {
   const { state, deleteTransaction } = useMoney();
   const { openEdit, openDialog } = useTxDialog();
   const currency = state.currency;
@@ -41,6 +50,55 @@ export function NodeDetailPanel({ node, onClose }: Props) {
 
         {node && (
           <div className="space-y-6 px-4 pb-10">
+            {/* Hierarchy Quick-Nav Links */}
+            {(parentNode || childNodes.length > 0) && (
+              <div className="rounded-2xl border border-border/80 bg-surface-2/40 p-3 space-y-2 text-xs">
+                <div className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                  Hierarchy Navigation
+                </div>
+                {parentNode && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectNode?.(parentNode)}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl border border-border bg-surface px-3 py-2 text-left font-medium transition-all hover:bg-surface-2 hover:border-primary/50"
+                  >
+                    <span className="flex items-center gap-1.5 min-w-0">
+                      <ArrowUp className="size-3.5 text-primary shrink-0" />
+                      <span className="text-muted-foreground">Parent:</span>
+                      <span className="truncate">{parentNode.icon} {parentNode.label}</span>
+                    </span>
+                    <span className="num shrink-0 text-muted-foreground">
+                      {formatMoney(parentNode.amount, currency)}
+                    </span>
+                  </button>
+                )}
+
+                {childNodes.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                      <ArrowDown className="size-3 text-primary" />
+                      <span>Direct Children ({childNodes.length}):</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {childNodes.map((child) => (
+                        <button
+                          key={child.id}
+                          type="button"
+                          onClick={() => onSelectNode?.(child)}
+                          className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs transition-colors hover:bg-surface-2 hover:border-primary/50"
+                        >
+                          <span>{child.icon ?? "•"}</span>
+                          <span className="max-w-[100px] truncate">{child.label}</span>
+                          <span className="num text-[10px] text-muted-foreground">
+                            {formatMoney(child.amount, currency)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             <div className="rounded-2xl border border-border bg-surface-2/60 p-4">
               <div className="text-[11px] tracking-[0.14em] text-muted-foreground uppercase">
                 {node.kind === "left" ? "Balance carried forward" : "Amount"}

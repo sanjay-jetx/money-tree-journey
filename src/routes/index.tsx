@@ -79,16 +79,34 @@ function TreePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, range.from, range.to]);
 
+  const { nodes, edges } = useMemo(() => layoutTree(root, collapsed), [root, collapsed]);
+
+  const selectedNode = useMemo(
+    () => (selected ? nodes.find((n) => n.id === selected.id) ?? selected : null),
+    [nodes, selected],
+  );
+
+  const parentNode = useMemo(() => {
+    if (!selectedNode) return null;
+    const edge = edges.find((e) => e.to.id === selectedNode.id);
+    return edge ? edge.from : null;
+  }, [selectedNode, edges]);
+
+  const childNodes = useMemo(() => {
+    if (!selectedNode) return [];
+    return edges.filter((e) => e.from.id === selectedNode.id).map((e) => e.to);
+  }, [selectedNode, edges]);
+
   const highlightIds = useMemo(() => {
     if (!filters.query.trim()) return undefined;
     const ids = new Set<string>();
     const matched = new Set(filteredTx.map((t) => t.id));
-    layoutTree(root, new Set()).nodes.forEach((n) => {
+    nodes.forEach((n) => {
       if (n.txIds.some((id) => matched.has(id))) ids.add(n.id);
     });
     ids.add("root");
     return ids;
-  }, [filters.query, filteredTx, root]);
+  }, [filters.query, filteredTx, nodes]);
 
   function toggle(id: string) {
     setCollapsed((prev) => {
@@ -307,7 +325,13 @@ function TreePage() {
         for actions
       </p>
 
-      <NodeDetailPanel node={selected} onClose={() => setSelected(null)} />
+      <NodeDetailPanel
+        node={selectedNode}
+        parentNode={parentNode}
+        childNodes={childNodes}
+        onSelectNode={(n) => setSelected(n)}
+        onClose={() => setSelected(null)}
+      />
 
       {menu && (
         <>
