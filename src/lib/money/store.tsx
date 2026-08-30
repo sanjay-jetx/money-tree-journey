@@ -68,7 +68,7 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.toggle("light", state.theme === "light");
+    root.classList.toggle("dark", state.theme === "dark");
     root.style.colorScheme = state.theme;
   }, [state.theme]);
 
