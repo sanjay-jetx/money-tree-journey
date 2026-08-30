@@ -241,12 +241,16 @@ export function TreeCanvas({
 
         {nodes.map((node) => {
           const dimmed = highlightIds && highlightIds.size > 0 && !highlightIds.has(node.id);
+          const onPath = activePathIds.has(node.id);
+          const isHovered = hovered?.id === node.id;
+          const isSelected = selectedId === node.id;
+          const muted = Boolean(activeId) && !onPath;
           return (
             <div
               key={node.id}
               data-node
               className="absolute"
-              style={{ left: node.x, top: node.y, width: NODE_W }}
+              style={{ left: node.x, top: node.y, width: NODE_W, zIndex: onPath ? 5 : 1 }}
             >
               <button
                 type="button"
@@ -261,13 +265,19 @@ export function TreeCanvas({
                 className={cn(
                   "animate-grow-in w-full rounded-[20px] border-[1.5px] px-4 py-3 text-left shadow-[var(--shadow-node)] transition-all duration-200",
                   nodeToneClasses(node),
-                  selectedId === node.id &&
+                  onPath && !isSelected && !isHovered && "ring-2 ring-primary/55 ring-offset-2 ring-offset-canvas",
+                  isHovered &&
+                    "-translate-y-1.5 scale-[1.03] ring-2 ring-primary/80 ring-offset-2 ring-offset-canvas shadow-[var(--shadow-glow)]",
+                  isSelected &&
                     "ring-[3px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_18px_40px_-14px_var(--glow)]",
                   dimmed
                     ? "opacity-20"
-                    : "hover:-translate-y-1 hover:shadow-[var(--shadow-glow)]",
+                    : muted
+                      ? "opacity-45 saturate-50"
+                      : "hover:-translate-y-1 hover:shadow-[var(--shadow-glow)]",
                 )}
                 style={{ height: NODE_H }}
+
               >
                 <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase opacity-90">
                   {node.icon && <span className="text-xs">{node.icon}</span>}
