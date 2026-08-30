@@ -10,6 +10,7 @@ function nodeToneClasses(node: PositionedNode): string {
     case "root":
       return "border-white/25 bg-[var(--node-root)] text-white";
     case "month":
+    case "week":
     case "date":
     case "left":
       return "border-white/20 bg-[var(--node-primary)] text-white";
@@ -29,6 +30,7 @@ function edgeStrokeColor(edge: Edge): string {
   switch (edge.to.kind) {
     case "root":
     case "month":
+    case "week":
     case "date":
     case "left":
       return "var(--node-primary)";
@@ -314,9 +316,21 @@ export function TreeCanvas({
                   data-node
                   onClick={() => onToggle(node.id)}
                   aria-label={node.collapsed ? "Expand branch" : "Collapse branch"}
-                  className="absolute -bottom-3 left-1/2 z-10 flex h-6 min-w-6 -translate-x-1/2 items-center justify-center gap-0.5 rounded-full border border-border bg-surface px-1.5 text-[10px] font-semibold text-muted-foreground shadow-[var(--shadow-node)] transition-colors hover:bg-secondary hover:text-primary"
+                  className={cn(
+                    "absolute -bottom-3.5 left-1/2 z-10 flex h-7 min-w-7 -translate-x-1/2 items-center justify-center gap-0.5 rounded-full border px-2 text-[10px] font-bold shadow-[var(--shadow-node)] transition-all duration-200",
+                    node.collapsed
+                      ? "border-primary bg-primary text-primary-foreground scale-110 shadow-[0_0_12px_var(--glow)] animate-pulse"
+                      : "border-border bg-surface text-muted-foreground hover:bg-secondary hover:text-primary",
+                  )}
                 >
-                  {node.collapsed ? `+${node.children.length}` : "−"}
+                  {node.collapsed ? (
+                    <>
+                      <span className="text-[11px] leading-none">+</span>
+                      <span>{node.children.length}</span>
+                    </>
+                  ) : (
+                    "−"
+                  )}
                 </button>
               )}
             </div>

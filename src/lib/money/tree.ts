@@ -1,11 +1,12 @@
-import { format, parseISO } from "date-fns";
-import { buildDays, categoryTotals, formatDayLabel, sortTx, sum } from "./calc";
+import { format, parseISO, startOfWeek } from "date-fns";
+import { ISO, buildDays, categoryTotals, formatDayLabel, sortTx, sum } from "./calc";
 import { categoryDef } from "./types";
 import type { MoneyState, Transaction, ViewMode } from "./types";
 
 export type NodeKind =
   | "root"
   | "month"
+  | "week"
   | "date"
   | "spent"
   | "left"
@@ -237,6 +238,48 @@ function dateNode(
 }
 
 
+/** Groups a list of day-summaries into week-level TreeNodes. */
+function buildWeekNodes(
+  list: { date: string; opening: number; income: number; spent: number; closing: number; transactions: Transaction[] }[],
+  groupKey: string,
+  view: ViewMode,
+): TreeNode[] {
+  const byWeek = new Map<string, typeof list>();
+  list.forEach((d) => {
+    const ws = format(startOfWeek(parseISO(d.date), { weekStartsOn: 1 }), ISO);
+    byWeek.set(ws, [...(byWeek.get(ws) ?? []), d]);
+  });
+
+  let weekIdx = 0;
+  return [...byWeek.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([weekStart, days]) => {
+      weekIdx++;
+      const first = days[0]!;
+      const last = days[days.length - 1]!;
+      const totalSpent = sum(days.map((d) => d.spent));
+      const totalIncome = sum(days.map((d) => d.income));
+      const parts = [`${formatDayLabel(first.date)} – ${formatDayLabel(last.date)}`];
+      if (totalIncome > 0) parts.push(`+₹${totalIncome.toLocaleString("en-IN")}`);
+      parts.push(`${days.length} day${days.length > 1 ? "s" : ""}`);
+      return {
+        id: `week-${groupKey}-${weekStart}`,
+        kind: "week" as NodeKind,
+        tone: "neutral" as Tone,
+        icon: "🗓️",
+        label: `WEEK ${weekIdx}`,
+        amount: totalSpent,
+        sublabel: parts.join(" · "),
+        date: first.date,
+        txIds: days.flatMap((d) => d.transactions.map((t) => t.id)),
+        children: days.map((d) => dateNode(d, view)),
+        collapsedByDefault: true,
+        balanceBefore: first.opening,
+        balanceAfter: last.closing,
+      };
+    });
+}
+
 export interface BuildOptions {
   view: ViewMode;
   from: string;
@@ -258,6 +301,7 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
   const children: TreeNode[] = [];
 
   if (opts.view === "year") {
+    // Year: Root → Month → Week → Day
     const byMonth = new Map<string, typeof scoped>();
     scoped.forEach((d) => {
       const key = d.date.slice(0, 7);
@@ -272,16 +316,21 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
           tone: "neutral",
           label: format(parseISO(`${month}-01`), "MMMM").toUpperCase(),
           amount: sum(list.map((d) => d.spent)),
-          sublabel: `spent · ${list.length} days`,
+          sublabel: `${list.length} day${list.length > 1 ? "s" : ""} · ₹${sum(list.map((d) => d.spent)).toLocaleString("en-IN")} spent`,
           date: `${month}-01`,
           txIds: list.flatMap((d) => d.transactions.map((t) => t.id)),
-          children: list.map((d) => dateNode(d, opts.view)),
+          children: buildWeekNodes(list, month, opts.view),
           collapsedByDefault: true,
           balanceBefore: list[0]!.opening,
           balanceAfter: list[list.length - 1]!.closing,
         });
       });
+  } else if (opts.view === "month") {
+    // Month: Root → Week → Day
+    const weekNodes = buildWeekNodes(scoped, opts.from.slice(0, 7), opts.view);
+    weekNodes.forEach((w) => children.push(w));
   } else {
+    // Day / Week: Root → Day directly
     scoped.forEach((d) => children.push(dateNode(d, opts.view)));
   }
 
