@@ -17,6 +17,7 @@ function nodeToneClasses(node: PositionedNode): string {
     case "income":
     case "spent":
     case "category":
+    case "investment":
       return "border-white/25 bg-[var(--node-standard)] text-white";
     case "transaction":
     case "forecast":
@@ -37,6 +38,7 @@ function edgeStrokeColor(edge: Edge): string {
     case "income":
     case "spent":
     case "category":
+    case "investment":
       return "var(--node-standard)";
     case "transaction":
     case "forecast":
@@ -210,7 +212,7 @@ export function TreeCanvas({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerUp}
-      
+
     >
       <div
         className="absolute top-0 left-0 origin-top-left"
@@ -290,9 +292,9 @@ export function TreeCanvas({
                   nodeToneClasses(node),
                   onPath && !isSelected && !isHovered && "ring-2 ring-primary/55 ring-offset-2 ring-offset-canvas",
                   isHovered &&
-                    "-translate-y-1.5 scale-[1.03] ring-2 ring-primary/80 ring-offset-2 ring-offset-canvas shadow-[var(--shadow-glow)]",
+                  "-translate-y-1.5 scale-[1.03] ring-2 ring-primary/80 ring-offset-2 ring-offset-canvas shadow-[var(--shadow-glow)]",
                   isSelected &&
-                    "ring-[3px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_18px_40px_-14px_var(--glow)]",
+                  "ring-[3px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_18px_40px_-14px_var(--glow)]",
                   dimmed
                     ? "opacity-20"
                     : muted
