@@ -160,6 +160,9 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       setOverdraft: (value: boolean) => setState((prev) => ({ ...prev, overdraft: value })),
       toggleTheme: () =>
         setState((prev) => ({ ...prev, theme: prev.theme === "dark" ? "light" : "dark" })),
+      setAccent: (name: AccentName) => setState((prev) => ({ ...prev, accent: name })),
+      setAccentIntensity: (level: number) =>
+        setState((prev) => ({ ...prev, accentIntensity: Math.min(5, Math.max(1, level)) })),
       loadDemo: () => {
         setState((prev) => ({ ...createDemoState(), theme: prev.theme }));
         toast.success("Demo money tree restored");
