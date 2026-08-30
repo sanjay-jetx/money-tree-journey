@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
+import { accentVars } from "./accent";
+import type { AccentName } from "./accent";
 import { balanceOn, formatMoney, todayISO } from "./calc";
 import { createDemoState, createEmptyState } from "./demo";
 import { EMPTY_FILTERS } from "./types";
@@ -31,6 +33,8 @@ export interface MoneyStore {
   setStartingBalance: (amount: number) => void;
   setOverdraft: (value: boolean) => void;
   toggleTheme: () => void;
+  setAccent: (name: AccentName) => void;
+  setAccentIntensity: (level: number) => void;
   loadDemo: () => void;
   clearAll: () => void;
   lastAddedId: string | null;
@@ -70,7 +74,9 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
     const root = document.documentElement;
     root.classList.toggle("dark", state.theme === "dark");
     root.style.colorScheme = state.theme;
-  }, [state.theme]);
+    const vars = accentVars(state.accent, state.accentIntensity, state.theme);
+    for (const [key, val] of Object.entries(vars)) root.style.setProperty(key, val);
+  }, [state.theme, state.accent, state.accentIntensity]);
 
   const setFilters = useCallback((next: Partial<Filters>) => {
     setFiltersState((prev) => ({ ...prev, ...next }));
@@ -154,12 +160,15 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       setOverdraft: (value: boolean) => setState((prev) => ({ ...prev, overdraft: value })),
       toggleTheme: () =>
         setState((prev) => ({ ...prev, theme: prev.theme === "dark" ? "light" : "dark" })),
+      setAccent: (name: AccentName) => setState((prev) => ({ ...prev, accent: name })),
+      setAccentIntensity: (level: number) =>
+        setState((prev) => ({ ...prev, accentIntensity: Math.min(5, Math.max(1, level)) })),
       loadDemo: () => {
-        setState((prev) => ({ ...createDemoState(), theme: prev.theme }));
+        setState((prev) => ({ ...createDemoState(), theme: prev.theme, accent: prev.accent, accentIntensity: prev.accentIntensity }));
         toast.success("Demo money tree restored");
       },
       clearAll: () => {
-        setState((prev) => ({ ...createEmptyState(), theme: prev.theme }));
+        setState((prev) => ({ ...createEmptyState(), theme: prev.theme, accent: prev.accent, accentIntensity: prev.accentIntensity }));
         toast.success("Your tree is now empty — plant your first entry");
       },
       lastAddedId,

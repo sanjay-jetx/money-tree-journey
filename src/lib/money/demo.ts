@@ -154,6 +154,8 @@ export function createDemoState(): MoneyState {
     overdraft: false,
     isDemo: true,
     theme: "light",
+    accent: "copper",
+    accentIntensity: 3,
     transactions,
     debts,
   };
@@ -167,6 +169,8 @@ export function createEmptyState(): MoneyState {
     overdraft: false,
     isDemo: false,
     theme: "light",
+    accent: "copper",
+    accentIntensity: 3,
     transactions: [],
     debts: [],
   };

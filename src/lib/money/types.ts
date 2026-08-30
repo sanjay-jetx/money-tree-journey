@@ -38,6 +38,8 @@ export interface MoneyState {
   overdraft: boolean;
   isDemo: boolean;
   theme: "dark" | "light";
+  accent: "copper" | "lavender" | "olive" | "teal" | "rose";
+  accentIntensity: number;
   transactions: Transaction[];
   debts: Debt[];
 }

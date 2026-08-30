@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { AccentPicker } from "@/components/settings/AccentPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -71,6 +72,16 @@ function SettingsPage() {
           </div>
           <Switch checked={state.theme === "dark"} onCheckedChange={toggleTheme} />
         </div>
+      </section>
+
+      <section className="space-y-4 rounded-2xl border border-border bg-surface/60 p-5">
+        <div>
+          <h2 className="text-base font-semibold">Accent colour</h2>
+          <p className="text-xs text-muted-foreground">
+            Pick a hue and how strong it feels — it re-tints the whole app instantly.
+          </p>
+        </div>
+        <AccentPicker />
       </section>
 
       <section className="space-y-3 rounded-2xl border border-border bg-surface/60 p-5">
