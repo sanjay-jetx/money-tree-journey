@@ -33,6 +33,8 @@ export interface MoneyStore {
   setStartingBalance: (amount: number) => void;
   setOverdraft: (value: boolean) => void;
   toggleTheme: () => void;
+  setAccent: (name: AccentName) => void;
+  setAccentIntensity: (level: number) => void;
   loadDemo: () => void;
   clearAll: () => void;
   lastAddedId: string | null;
