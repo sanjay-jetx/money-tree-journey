@@ -84,33 +84,34 @@
   --popover-foreground: #2a2118;
 
   /* rich copper */
-  --primary: #a86a2c;
+  --primary: #915519;
   --primary-foreground: #fffdf9;
   --secondary: #f0ebe3;
-  --secondary-foreground: #6b4a25;
+  --secondary-foreground: #63431f;
   --muted: #f4efe6;
-  --muted-foreground: #857763;
+  --muted-foreground: #6d6151;
   --accent: #f5e7d5;
   --accent-foreground: #8b5a22;
   --destructive: #b4482f;
   --destructive-foreground: #fffdf9;
 
-  --border: #e0d6c7;
-  --input: #d3c6b3;
-  --ring: #a86a2c;
+  --border: #cdc0ad;
+  --border-strong: #a2937e;
+  --input: #8f8271;
+  --ring: #915519;
   --glow: color-mix(in oklab, #8b6a3f 26%, transparent);
 
   /* olive tree green */
-  --income: #4f7a4f;
+  --income: #3f6b3f;
   --income-soft: #e2ecdd;
   --expense: #b4482f;
   --expense-soft: #f6e2db;
   --balance: #3c5f6e;
   --balance-soft: #e0eaee;
-  --pending: #b1832a;
+  --pending: #8f6817;
   --pending-soft: #f7ecd6;
   --debt: #a83f2b;
-  --forecast: #8b7355;
+  --forecast: #7a6446;
 
   /* Money Tree nodes — dark espresso family with copper root */
   --node-root: #9a5b22;
@@ -119,13 +120,13 @@
   --node-primary: #33251a;
   --node-primary-text: #fffdf9;
   --node-primary-soft: color-mix(in oklab, #33251a 12%, white);
-  --node-standard: #6d5540;
+  --node-standard: #5d4735;
   --node-standard-text: #fffdf9;
-  --node-standard-soft: color-mix(in oklab, #6d5540 14%, white);
+  --node-standard-soft: color-mix(in oklab, #5d4735 14%, white);
   --node-secondary: #ddd0ba;
   --node-secondary-text: #33251a;
   --node-secondary-soft: color-mix(in oklab, #ddd0ba 40%, white);
-  --node-edge: #b6a289;
+  --node-edge: #948066;
 
   --chart-1: var(--income);
   --chart-2: var(--expense);
@@ -136,7 +137,7 @@
   /* deep espresso sidebar */
   --sidebar: #2b1f16;
   --sidebar-foreground: #fdf8f1;
-  --sidebar-muted: #c6b39c;
+  --sidebar-muted: #cbb9a3;
   --sidebar-surface: #3a2a1d;
   --sidebar-accent: #a86a2c;
   --sidebar-border: #43311f;
@@ -170,8 +171,9 @@
   --destructive: #d4644a;
   --destructive-foreground: #1a120c;
 
-  --border: #38291d;
-  --input: #453325;
+  --border: #4d3a29;
+  --border-strong: #6b5340;
+  --input: #7d6650;
   --ring: #d08c3c;
   --glow: color-mix(in oklab, #d08c3c 30%, transparent);
 
