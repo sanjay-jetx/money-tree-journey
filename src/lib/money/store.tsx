@@ -164,11 +164,11 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       setAccentIntensity: (level: number) =>
         setState((prev) => ({ ...prev, accentIntensity: Math.min(5, Math.max(1, level)) })),
       loadDemo: () => {
-        setState((prev) => ({ ...createDemoState(), theme: prev.theme }));
+        setState((prev) => ({ ...createDemoState(), theme: prev.theme, accent: prev.accent, accentIntensity: prev.accentIntensity }));
         toast.success("Demo money tree restored");
       },
       clearAll: () => {
-        setState((prev) => ({ ...createEmptyState(), theme: prev.theme }));
+        setState((prev) => ({ ...createEmptyState(), theme: prev.theme, accent: prev.accent, accentIntensity: prev.accentIntensity }));
         toast.success("Your tree is now empty — plant your first entry");
       },
       lastAddedId,
