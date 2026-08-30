@@ -48,7 +48,7 @@ export function accentVars(
   const h = p.hue;
   const dark = theme === "dark";
 
-  const primaryL = dark ? 0.72 : 0.57;
+  const primaryL = dark ? 0.75 : 0.52;
   const primary = oklch(primaryL, c, h);
   const primaryDeep = oklch(primaryL - (dark ? 0.1 : 0.09), c * 0.95, h);
   const primaryLift = oklch(primaryL + (dark ? 0.07 : 0.08), c * 0.9, h);
@@ -58,8 +58,8 @@ export function accentVars(
     "--primary-foreground": dark ? oklch(0.16, 0.02, h) : oklch(0.99, 0.005, h),
     "--ring": primary,
     "--accent": dark ? oklch(0.3, c * 0.35, h) : oklch(0.93, c * 0.35, h),
-    "--accent-foreground": dark ? oklch(0.85, c * 0.6, h) : oklch(0.42, c * 0.85, h),
-    "--secondary-foreground": dark ? oklch(0.82, c * 0.6, h) : oklch(0.45, c * 0.85, h),
+    "--accent-foreground": dark ? oklch(0.88, c * 0.55, h) : oklch(0.4, c * 0.85, h),
+    "--secondary-foreground": dark ? oklch(0.86, c * 0.55, h) : oklch(0.4, c * 0.85, h),
     "--sidebar-accent": primary,
     "--glow": `color-mix(in oklab, ${primary} ${dark ? 34 : 28}%, transparent)`,
     "--gradient-accent": `linear-gradient(135deg, ${primaryLift} 0%, ${primary} 52%, ${primaryDeep} 100%)`,
