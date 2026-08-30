@@ -293,6 +293,7 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     (d) => d.date >= opts.from && d.date <= opts.to,
   );
   const visibleIds = new Set(opts.filteredTx.map((t) => t.id));
+  const yearLabel = opts.from.slice(0, 4);
   const scoped = days
     .map((d) => ({ ...d, transactions: d.transactions.filter((t) => visibleIds.has(t.id)) }))
     .filter((d) => d.transactions.length > 0 || opts.view === "day");
@@ -380,9 +381,9 @@ function collapseRedundant(node: TreeNode): TreeNode {
     kind: "root",
     tone: "balance",
     icon: "🪙",
-    label: "START BALANCE",
+    label: opts.view === "year" ? yearLabel : "START BALANCE",
     amount: rootAmount,
-    sublabel: opts.view === "day" ? "opening balance" : "beginning of period",
+    sublabel: opts.view === "year" ? "yearly overview" : opts.view === "day" ? "opening balance" : "beginning of period",
     txIds: [],
     children,
     balanceBefore: rootAmount,
