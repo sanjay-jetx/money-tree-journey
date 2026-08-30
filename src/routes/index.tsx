@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-
 import { useEffect, useMemo, useState } from "react";
 import { StatsBar } from "@/components/dashboard/StatsBar";
 import { NodeDetailPanel } from "@/components/tree/NodeDetailPanel";
+import { ColorLegend } from "@/components/tree/ColorLegend";
 import { TreeCanvas } from "@/components/tree/TreeCanvas";
 import type { ContextAction } from "@/components/tree/TreeCanvas";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
@@ -275,17 +276,21 @@ function TreePage() {
       {!ready ? (
         <div className="h-[560px] animate-pulse rounded-3xl bg-secondary/50" />
       ) : hasData ? (
-        <TreeCanvas
-          root={root}
-          collapsed={collapsed}
-          onToggle={toggle}
-          onSelect={setSelected}
-          selectedId={selected?.id ?? null}
-          highlightIds={highlightIds}
-          currency={state.currency}
-          onContextAction={setMenu}
-          className="h-[560px] lg:h-[640px]"
-        />
+        <div className="relative">
+          <TreeCanvas
+            root={root}
+            collapsed={collapsed}
+            onToggle={toggle}
+            onSelect={setSelected}
+            selectedId={selected?.id ?? null}
+            highlightIds={highlightIds}
+            currency={state.currency}
+            onContextAction={setMenu}
+            className="h-[560px] lg:h-[640px]"
+          />
+          <ColorLegend className="pointer-events-none absolute right-4 bottom-4 z-20" />
+        </div>
+
       ) : (
         <div className="canvas-grain flex h-[520px] flex-col items-center justify-center gap-4 rounded-3xl text-center shadow-[var(--shadow-node)]">
           <div className="text-5xl">🌱</div>
