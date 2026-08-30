@@ -1,4 +1,4 @@
-import { ArrowRight, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatMoney } from "@/lib/money/calc";
 import { NODE_H, NODE_W, layoutTree } from "@/lib/money/tree";
@@ -119,6 +119,27 @@ export function TreeCanvas({
     },
     [nodes, width],
   );
+
+  /** Smoothly snaps canvas so the given node appears centered. */
+  const centerOnNode = useCallback(
+    (node: PositionedNode) => {
+      const el = containerRef.current;
+      if (!el) return;
+      setTransform((t) => ({
+        ...t,
+        x: el.clientWidth / 2 - (node.x + NODE_W / 2) * t.scale,
+        y: Math.max(48, el.clientHeight / 3 - node.y * t.scale),
+      }));
+    },
+    [],
+  );
+
+  /** All currently-collapsed nodes that have children (visible in layout). */
+  const collapsedNodes = useMemo(
+    () => nodes.filter((n) => n.collapsed && n.hasChildren),
+    [nodes],
+  );
+  const [collapsedPanelOpen, setCollapsedPanelOpen] = useState(false);
 
   useEffect(() => {
     center();
@@ -314,7 +335,14 @@ export function TreeCanvas({
                 <button
                   type="button"
                   data-node
-                  onClick={() => onToggle(node.id)}
+                  onClick={() => {
+                    onToggle(node.id);
+                    // After collapsing, immediately re-center the canvas on this node
+                    // so it never disappears off-screen
+                    if (!node.collapsed) {
+                      setTimeout(() => centerOnNode(node), 30);
+                    }
+                  }}
                   aria-label={node.collapsed ? "Expand branch" : "Collapse branch"}
                   className={cn(
                     "absolute -bottom-3.5 left-1/2 z-10 flex h-7 min-w-7 -translate-x-1/2 items-center justify-center gap-0.5 rounded-full border px-2 text-[10px] font-bold shadow-[var(--shadow-node)] transition-all duration-200",
@@ -368,6 +396,51 @@ export function TreeCanvas({
       )}
 
 
+      {/* ── Collapsed branches panel ── */}
+      {collapsedNodes.length > 0 && (
+        <div className="glass-panel absolute top-4 right-4 z-20 w-52 rounded-2xl overflow-hidden">
+          <button
+            type="button"
+            data-node
+            onClick={() => setCollapsedPanelOpen((o) => !o)}
+            className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-surface-2 transition-colors"
+          >
+            <span className="flex items-center gap-1.5">
+              <span className="flex size-4 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                {collapsedNodes.length}
+              </span>
+              Collapsed branches
+            </span>
+            {collapsedPanelOpen
+              ? <ChevronUp className="size-3 text-muted-foreground" />
+              : <ChevronDown className="size-3 text-muted-foreground" />}
+          </button>
+          {collapsedPanelOpen && (
+            <ul className="border-t border-border">
+              {collapsedNodes.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    data-node
+                    onClick={() => {
+                      centerOnNode(n);
+                      setCollapsedPanelOpen(false);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs hover:bg-surface-2 transition-colors"
+                  >
+                    <span className="shrink-0 text-sm">{n.icon ?? "📦"}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">{n.label}</span>
+                    <span className="num shrink-0 text-[10px] text-muted-foreground">
+                      +{n.children.length}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <div className="glass-panel absolute right-4 bottom-4 flex items-center gap-1 rounded-xl p-1">
         <IconBtn onClick={() => zoom(-1)} label="Zoom out">
           <Minus className="size-4" />
@@ -378,7 +451,7 @@ export function TreeCanvas({
         <IconBtn onClick={() => zoom(1)} label="Zoom in">
           <Plus className="size-4" />
         </IconBtn>
-        <IconBtn onClick={() => center()} label="Recenter">
+        <IconBtn onClick={() => center()} label="Recenter to root">
           <RotateCcw className="size-4" />
         </IconBtn>
         <IconBtn
@@ -387,7 +460,7 @@ export function TreeCanvas({
             if (!el) return;
             center(Math.min(1.4, Math.max(0.22, (el.clientWidth - 80) / Math.max(width, 1))));
           }}
-          label="Fit tree"
+          label="Fit whole tree"
         >
           <Maximize2 className="size-4" />
         </IconBtn>
