@@ -72,64 +72,60 @@
 :root {
   --radius: 1.25rem;
 
+  /* Warm sand canvas with espresso ink */
+  --background: #ece5da;
+  --foreground: #2a2118;
+  --canvas: #fffdf9;
+  --surface: #fffdf9;
+  --surface-2: #f4efe6;
+  --card: #fffdf9;
+  --card-foreground: #2a2118;
+  --popover: #fffdf9;
+  --popover-foreground: #2a2118;
 
-  /* rich dark blue content area behind white cards */
-  --background: #0b2a4a;
-  --foreground: #111827;
-  --canvas: #ffffff;
-  --surface: #ffffff;
-  --surface-2: #f1f5f9;
-  --card: #ffffff;
-  --card-foreground: #111827;
-  --popover: #ffffff;
-  --popover-foreground: #111827;
+  /* rich copper */
+  --primary: #a86a2c;
+  --primary-foreground: #fffdf9;
+  --secondary: #f0ebe3;
+  --secondary-foreground: #6b4a25;
+  --muted: #f4efe6;
+  --muted-foreground: #857763;
+  --accent: #f5e7d5;
+  --accent-foreground: #8b5a22;
+  --destructive: #b4482f;
+  --destructive-foreground: #fffdf9;
 
-  /* #8B5CF6 purple */
-  --primary: #8b5cf6;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  /* #7C3AED */
-  --secondary-foreground: #7c3aed;
-  --muted: #f5f7fa;
-  /* #6B7280 */
-  --muted-foreground: #6b7280;
-  --accent: #ede9fe;
-  --accent-foreground: #6d28d9;
-  --destructive: #f87171;
-  --destructive-foreground: #ffffff;
+  --border: #e0d6c7;
+  --input: #d3c6b3;
+  --ring: #a86a2c;
+  --glow: color-mix(in oklab, #8b6a3f 26%, transparent);
 
-  --border: #e5e9f0;
-  --input: #d8dee9;
-  --ring: #8b5cf6;
-  --glow: color-mix(in oklab, #8b5cf6 24%, transparent);
+  /* olive tree green */
+  --income: #4f7a4f;
+  --income-soft: #e2ecdd;
+  --expense: #b4482f;
+  --expense-soft: #f6e2db;
+  --balance: #3c5f6e;
+  --balance-soft: #e0eaee;
+  --pending: #b1832a;
+  --pending-soft: #f7ecd6;
+  --debt: #a83f2b;
+  --forecast: #8b7355;
 
-  /* #4CAF6A tree green */
-  --income: #4caf6a;
-  --income-soft: #ddf4e4;
-  --expense: #f87171;
-  --expense-soft: #fde8e8;
-  --balance: #2563eb;
-  --balance-soft: #e0e9ff;
-  /* #F4C542 gold */
-  --pending: #d9a520;
-  --pending-soft: #fbf0d2;
-  --debt: #ef5f5f;
-  --forecast: #8b5cf6;
-
-  /* Unified Money Tree node palette — dark blue + purple */
-  --node-root: #a855f7;
-  --node-root-text: #ffffff;
-  --node-root-soft: color-mix(in oklab, #a855f7 12%, white);
-  --node-primary: #0b3d91;
-  --node-primary-text: #ffffff;
-  --node-primary-soft: color-mix(in oklab, #0b3d91 12%, white);
-  --node-standard: #7b8cff;
-  --node-standard-text: #ffffff;
-  --node-standard-soft: color-mix(in oklab, #7b8cff 14%, white);
-  --node-secondary: #c4b5fd;
-  --node-secondary-text: #1e1b4b;
-  --node-secondary-soft: color-mix(in oklab, #c4b5fd 22%, white);
-  --node-edge: #7b8cff;
+  /* Money Tree nodes — dark espresso family with copper root */
+  --node-root: #9a5b22;
+  --node-root-text: #fffdf9;
+  --node-root-soft: color-mix(in oklab, #9a5b22 12%, white);
+  --node-primary: #33251a;
+  --node-primary-text: #fffdf9;
+  --node-primary-soft: color-mix(in oklab, #33251a 12%, white);
+  --node-standard: #6d5540;
+  --node-standard-text: #fffdf9;
+  --node-standard-soft: color-mix(in oklab, #6d5540 14%, white);
+  --node-secondary: #ddd0ba;
+  --node-secondary-text: #33251a;
+  --node-secondary-soft: color-mix(in oklab, #ddd0ba 40%, white);
+  --node-edge: #b6a289;
 
   --chart-1: var(--income);
   --chart-2: var(--expense);
@@ -137,20 +133,20 @@
   --chart-4: var(--pending);
   --chart-5: var(--forecast);
 
-  /* #0B3D91 deep blue sidebar */
-  --sidebar: #0b3d91;
-  --sidebar-foreground: #ffffff;
-  --sidebar-muted: #a9c2ec;
-  --sidebar-surface: #0e4aad;
-  --sidebar-accent: #8b5cf6;
-  --sidebar-border: #14509f;
+  /* deep espresso sidebar */
+  --sidebar: #2b1f16;
+  --sidebar-foreground: #fdf8f1;
+  --sidebar-muted: #c6b39c;
+  --sidebar-surface: #3a2a1d;
+  --sidebar-accent: #a86a2c;
+  --sidebar-border: #43311f;
 }
 
 .light {
-  --background: #0b2a4a;
-  --canvas: #ffffff;
-  --surface-2: #f1f5f9;
-  --sidebar: #0b3d91;
+  --background: #ece5da;
+  --canvas: #fffdf9;
+  --surface-2: #f4efe6;
+  --sidebar: #2b1f16;
 }
 
 
