@@ -73,6 +73,16 @@ function SettingsPage() {
         </div>
       </section>
 
+      <section className="space-y-4 rounded-2xl border border-border bg-surface/60 p-5">
+        <div>
+          <h2 className="text-base font-semibold">Accent colour</h2>
+          <p className="text-xs text-muted-foreground">
+            Pick a hue and how strong it feels — it re-tints the whole app instantly.
+          </p>
+        </div>
+        <AccentPicker />
+      </section>
+
       <section className="space-y-3 rounded-2xl border border-border bg-surface/60 p-5">
         <h2 className="text-base font-semibold">Data</h2>
         <p className="text-xs text-muted-foreground">
