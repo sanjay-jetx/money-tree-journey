@@ -352,53 +352,43 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     });
   }
 
-  // Static Investment branch (Gold, Silver, Stocks)
-  children.push({
-    id: "investment",
-    kind: "investment",
-    tone: "neutral",
-    icon: "📈",
-    label: "INVESTMENT",
-    amount: 0,
-    sublabel: "assets",
-    txIds: [],
-    collapsedByDefault: true,
-    children: [
-      {
-        id: "investment-gold",
-        kind: "investment",
-        tone: "neutral",
-        icon: "🥇",
-        label: "GOLD",
-        amount: 0,
-        sublabel: "precious metal",
-        txIds: [],
-        children: [],
-      },
-      {
-        id: "investment-silver",
-        kind: "investment",
-        tone: "neutral",
-        icon: "🥈",
-        label: "SILVER",
-        amount: 0,
-        sublabel: "precious metal",
-        txIds: [],
-        children: [],
-      },
-      {
-        id: "investment-stocks",
-        kind: "investment",
-        tone: "neutral",
-        icon: "📊",
-        label: "STOCKS",
-        amount: 0,
-        sublabel: "equities",
-        txIds: [],
-        children: [],
-      },
-    ],
-  });
+  // Investment branch — built from the user's real holdings; skipped when there are none.
+  if (state.investments.length > 0) {
+    const summary = portfolioSummary(state.investments);
+    children.push({
+      id: "investment",
+      kind: "investment",
+      tone: "neutral",
+      icon: "📈",
+      label: "INVESTMENT",
+      amount: summary.value,
+      sublabel: `${summary.count} holding${summary.count > 1 ? "s" : ""} · ${summary.gain >= 0 ? "+" : ""}${summary.gainPct.toFixed(1)}%`,
+      txIds: [],
+      collapsedByDefault: true,
+      balanceBefore: summary.principal,
+      balanceAfter: summary.value,
+      children: sortInvestments(state.investments).map((inv) => {
+        const def = investmentKindDef(inv.kind);
+        const value = investmentValue(inv);
+        const gain = value - inv.principal;
+        const pct = investmentGainPct(inv);
+        return {
+          id: `investment-${inv.id}`,
+          kind: "investment" as NodeKind,
+          tone: "neutral" as Tone,
+          icon: def.icon,
+          label: inv.name.toUpperCase(),
+          amount: value,
+          sublabel: `${def.label} · ${gain >= 0 ? "+" : ""}${pct.toFixed(1)}%`,
+          date: inv.startDate,
+          txIds: [],
+          children: [],
+          balanceBefore: inv.principal,
+          balanceAfter: value,
+        };
+      }),
+    });
+  }
 
   /**
    * Removes pass-through branches: a node whose single child carries the same amount
