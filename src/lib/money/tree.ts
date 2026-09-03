@@ -1,6 +1,12 @@
 import { format, parseISO, startOfWeek } from "date-fns";
 import { ISO, buildDays, categoryTotals, formatDayLabel, sortTx, sum } from "./calc";
-import { categoryDef } from "./types";
+import {
+  investmentGainPct,
+  investmentValue,
+  portfolioSummary,
+  sortInvestments,
+} from "./investments";
+import { categoryDef, investmentKindDef } from "./types";
 import type { MoneyState, Transaction, ViewMode } from "./types";
 
 export type NodeKind =
