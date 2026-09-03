@@ -31,6 +31,19 @@ export interface Debt {
   status: DebtStatus;
 }
 
+export interface MonthBudgetOverride {
+  overallSpendLimit?: number | undefined;
+  savingsTarget?: number | undefined;
+  categoryBudgets?: Record<string, number> | undefined;
+}
+
+export interface BudgetConfig {
+  overallSpendLimit: number;
+  savingsTarget: number;
+  categoryBudgets: Record<string, number>;
+  monthOverrides?: Record<string, MonthBudgetOverride> | undefined;
+}
+
 export interface MoneyState {
   startingBalance: number;
   startDate: string;
@@ -43,6 +56,7 @@ export interface MoneyState {
   transactions: Transaction[];
   debts: Debt[];
   investments: Investment[];
+  budgetConfig: BudgetConfig;
 }
 
 export interface Filters {

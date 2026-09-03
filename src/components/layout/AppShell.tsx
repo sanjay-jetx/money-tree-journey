@@ -9,12 +9,25 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/", label: "Money Tree", icon: "🌳" },
+  { to: "/budget", label: "Budget & Goals", icon: "🎯" },
   { to: "/insights", label: "Insights", icon: "📊" },
   { to: "/time-machine", label: "Time Machine", icon: "⏳" },
   { to: "/income", label: "Income", icon: "💰" },
   { to: "/spending", label: "Spending", icon: "💸" },
   { to: "/investments", label: "Investments", icon: "📈" },
   { to: "/owed", label: "Owed", icon: "🤝" },
+  { to: "/settings", label: "Settings", icon: "⚙️" },
+] as const;
+
+const MOBILE_NAV_LEFT = [
+  { to: "/", label: "Tree", icon: "🌳" },
+  { to: "/budget", label: "Budget", icon: "🎯" },
+  { to: "/insights", label: "Insights", icon: "📊" },
+] as const;
+
+const MOBILE_NAV_RIGHT = [
+  { to: "/spending", label: "Spend", icon: "💸" },
+  { to: "/investments", label: "Invest", icon: "📈" },
   { to: "/settings", label: "Settings", icon: "⚙️" },
 ] as const;
 
@@ -103,7 +116,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="pb-24 lg:pb-0 lg:pl-[262px]">{children}</main>
 
       <nav className="fixed bottom-0 left-0 z-30 flex w-full items-center justify-between gap-1 border-t border-border bg-background/95 px-2 py-1.5 backdrop-blur lg:hidden">
-        {NAV.slice(0, 3).map((item) => (
+        {MOBILE_NAV_LEFT.map((item) => (
           <MobileNavItem key={item.to} {...item} active={pathname === item.to} />
         ))}
         <button
@@ -114,7 +127,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <Plus className="size-6" />
         </button>
-        {NAV.slice(4, 7).map((item) => (
+        {MOBILE_NAV_RIGHT.map((item) => (
           <MobileNavItem key={item.to} {...item} active={pathname === item.to} />
         ))}
       </nav>

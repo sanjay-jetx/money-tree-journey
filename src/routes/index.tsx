@@ -68,7 +68,16 @@ function todayFocusCollapsed(root: TreeNode, today: string): Set<string> {
   return set;
 }
 
+interface TreeSearch {
+  date?: string | undefined;
+  txId?: string | undefined;
+}
+
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>): TreeSearch => ({
+    date: typeof search["date"] === "string" && search["date"] ? (search["date"] as string) : undefined,
+    txId: typeof search["txId"] === "string" && search["txId"] ? (search["txId"] as string) : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "MoneyTree — See the journey of your money" },
@@ -91,6 +100,7 @@ export const Route = createFileRoute("/")({
 const VIEWS: ViewMode[] = ["day", "week", "month", "year"];
 
 function TreePage() {
+  const search = Route.useSearch();
   const { state, ready, view, setView, anchorDate, setAnchorDate, filters, setFilters, resetFilters } =
     useMoney();
   const { openDialog } = useTxDialog();
@@ -99,6 +109,13 @@ function TreePage() {
   const [selected, setSelected] = useState<PositionedNode | null>(null);
   const [menu, setMenu] = useState<ContextAction | null>(null);
   const [showProjection, setShowProjection] = useState(false);
+
+  // If a date search param is provided, align anchorDate
+  useEffect(() => {
+    if (search.date && search.date !== anchorDate) {
+      setAnchorDate(search.date);
+    }
+  }, [search.date, anchorDate, setAnchorDate]);
 
   const range = useMemo(() => periodRange(view, anchorDate), [view, anchorDate]);
   const filteredTx = useMemo(() => applyFilters(state.transactions, filters), [state.transactions, filters]);
@@ -120,9 +137,42 @@ function TreePage() {
   }, [root, view, today]);
 
   useEffect(() => {
-    focusToday();
+    if (search.date) {
+      const targetDate = search.date;
+      const mKey = targetDate.slice(0, 7);
+      setCollapsed((prev) => {
+        const next = new Set(prev);
+        next.delete(`month-${mKey}`);
+        for (const id of next) {
+          if (id.startsWith(`week-${mKey}-`)) {
+            next.delete(id);
+          }
+        }
+        next.delete(`date-${targetDate}`);
+        return next;
+      });
+    } else {
+      focusToday();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, range.from, range.to]);
+  }, [view, range.from, range.to, search.date]);
+
+  // When search date or txId is specified, auto-select that node to open its detail sheet
+  useEffect(() => {
+    if (!ready || !search.date) return;
+    const targetDate = search.date;
+    const layout = layoutTree(root, collapsed);
+    const targetNode =
+      (search.txId
+        ? layout.nodes.find((n) => n.txId === search.txId || n.txIds.includes(search.txId!))
+        : null) ||
+      layout.nodes.find((n) => n.kind === "date" && n.date === targetDate) ||
+      layout.nodes.find((n) => n.date === targetDate);
+
+    if (targetNode) {
+      setSelected(targetNode);
+    }
+  }, [search.date, search.txId, root, collapsed, ready]);
 
   const highlightIds = useMemo(() => {
     if (!filters.query.trim()) return undefined;

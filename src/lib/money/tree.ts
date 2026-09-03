@@ -322,7 +322,7 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
           id: `month-${month}`,
           kind: "month",
           tone: "neutral",
-          label: format(parseISO(`${month}-01`), "MMMM").toUpperCase(),
+          label: format(parseISO(`${month}-01`), "MMM").toUpperCase(),
           amount: sum(list.map((d) => d.spent)),
           sublabel: `${list.length} day${list.length > 1 ? "s" : ""} · ₹${sum(list.map((d) => d.spent)).toLocaleString("en-IN")} spent`,
           date: `${month}-01`,
@@ -334,11 +334,38 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
         });
       });
   } else if (opts.view === "month") {
-    // Month: Root → Week → Day
-    const weekNodes = buildWeekNodes(scoped, opts.from.slice(0, 7), opts.view);
-    weekNodes.forEach((w) => children.push(w));
+    // Month: Root → Month (e.g. AUG) → Week → Day
+    const byMonth = new Map<string, typeof scoped>();
+    scoped.forEach((d) => {
+      const key = d.date.slice(0, 7);
+      byMonth.set(key, [...(byMonth.get(key) ?? []), d]);
+    });
+    [...byMonth.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .forEach(([month, list]) => {
+        children.push({
+          id: `month-${month}`,
+          kind: "month",
+          tone: "neutral",
+          label: format(parseISO(`${month}-01`), "MMM").toUpperCase(),
+          amount: sum(list.map((d) => d.spent)),
+          sublabel: `${list.length} day${list.length > 1 ? "s" : ""} · ₹${sum(list.map((d) => d.spent)).toLocaleString("en-IN")} spent`,
+          date: `${month}-01`,
+          txIds: list.flatMap((d) => d.transactions.map((t) => t.id)),
+          children: buildWeekNodes(list, month, opts.view),
+          collapsedByDefault: false,
+          balanceBefore: list[0]!.opening,
+          balanceAfter: list[list.length - 1]!.closing,
+        });
+      });
+  } else if (opts.view === "week") {
+    // Week: Root → Week Node → Days
+    const weekNodes = buildWeekNodes(scoped, opts.from, opts.view);
+    weekNodes.forEach((w) => {
+      children.push({ ...w, collapsedByDefault: false });
+    });
   } else {
-    // Day / Week: Root → Day directly
+    // Day: Root → Day directly
     scoped.forEach((d) => children.push(dateNode(d, opts.view)));
   }
 
@@ -420,15 +447,28 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     return { ...node, children };
   }
 
+  const rootLabel =
+    opts.view === "year"
+      ? `YEAR ${yearLabel}`
+      : opts.view === "month"
+        ? `${format(parseISO(`${opts.from.slice(0, 7)}-01`), "MMMM yyyy").toUpperCase()}`
+        : opts.view === "week"
+          ? `WEEK OF ${formatDayLabel(opts.from)}`
+          : `DAY ${formatDayLabel(opts.from)}`;
 
   return collapseRedundant({
     id: "root",
     kind: "root",
     tone: "balance",
     icon: "🪙",
-    label: opts.view === "year" ? yearLabel : "START BALANCE",
+    label: rootLabel,
     amount: rootAmount,
-    sublabel: opts.view === "year" ? "yearly overview" : opts.view === "day" ? "opening balance" : "beginning of period",
+    sublabel:
+      opts.view === "year"
+        ? "yearly overview"
+        : opts.view === "day"
+          ? "opening balance"
+          : "period starting balance",
     txIds: [],
     children,
     balanceBefore: rootAmount,

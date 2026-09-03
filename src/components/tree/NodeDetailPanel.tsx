@@ -1,4 +1,5 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Pencil, Trash2, TreePine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
@@ -94,9 +95,13 @@ export function NodeDetailPanel({ node, onClose }: Props) {
 
             {node.kind === "date" && node.date && <DayBreakdown date={node.date} />}
 
-            {(node.kind === "category" || node.kind === "spent" || node.kind === "income") && (
-              <BranchAnalytics node={node} txs={txs} />
-            )}
+            {(node.kind === "category" ||
+              node.kind === "spent" ||
+              node.kind === "income" ||
+              node.kind === "month" ||
+              node.kind === "week" ||
+              node.kind === "root") &&
+              txs.length > 0 && <BranchAnalytics node={node} txs={txs} />}
 
             {!single && txs.length > 0 && (
               <div className="space-y-2">
@@ -280,6 +285,15 @@ export function TxRow({
         {tx.type === "income" ? "+" : "−"}
         {formatMoney(tx.amount, currency)}
       </span>
+      <Link
+        to="/"
+        search={{ date: tx.date, txId: tx.id }}
+        aria-label="View on tree"
+        title="View on tree"
+        className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-surface-2 transition-colors flex items-center gap-1"
+      >
+        <TreePine className="size-3.5 text-income" />
+      </Link>
       <button
         type="button"
         onClick={onEdit}

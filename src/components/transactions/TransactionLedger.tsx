@@ -1,4 +1,6 @@
+import { Link } from "@tanstack/react-router";
 import { format, parseISO } from "date-fns";
+import { TreePine } from "lucide-react";
 import { useMemo } from "react";
 import { TxRow } from "@/components/tree/NodeDetailPanel";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
@@ -77,10 +79,21 @@ export function TransactionLedger({ type, title, subtitle }: Props) {
         <div className="space-y-5">
           {grouped.map(([date, items]) => (
             <section key={date} className="space-y-2">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-sm font-semibold">
-                  {format(parseISO(date), "EEEE, MMMM d, yyyy")}
-                </h2>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold">
+                    {format(parseISO(date), "EEEE, MMMM d, yyyy")}
+                  </h2>
+                  <Link
+                    to="/"
+                    search={{ date }}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:border-border-strong transition-colors"
+                    title="View this day on the money tree"
+                  >
+                    <TreePine className="size-3 text-income" />
+                    <span>View day on tree</span>
+                  </Link>
+                </div>
                 <span className="num text-xs text-muted-foreground">
                   {formatMoney(sum(items.map((t) => t.amount)), state.currency)}
                 </span>

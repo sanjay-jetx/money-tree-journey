@@ -1,4 +1,14 @@
-import { ArrowRight, ChevronDown, ChevronUp, Maximize2, Minus, Plus, RotateCcw } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  FoldVertical,
+  Maximize2,
+  Minus,
+  Plus,
+  RotateCcw,
+  UnfoldVertical,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatMoney } from "@/lib/money/calc";
 import { NODE_H, NODE_W, layoutTree } from "@/lib/money/tree";
@@ -8,44 +18,47 @@ import { cn } from "@/lib/utils";
 function nodeToneClasses(node: PositionedNode): string {
   switch (node.kind) {
     case "root":
-      return "border-white/25 bg-[var(--node-root)] text-white";
+      return "border-primary/60 bg-[var(--node-root)] text-white shadow-[0_10px_25px_-5px_var(--glow)] ring-1 ring-primary/40";
     case "month":
+      return "border-primary/40 bg-[var(--node-primary)] text-white shadow-md ring-1 ring-primary/25";
     case "week":
+      return "border-white/20 bg-[var(--node-standard)] text-white shadow-sm";
     case "date":
-    case "left":
-      return "border-white/20 bg-[var(--node-primary)] text-white";
+      return "border-border-strong bg-surface text-foreground shadow-sm hover:border-primary/70";
     case "income":
+      return "border-income/50 bg-income text-white shadow-[0_6px_20px_-6px_rgba(63,107,63,0.4)]";
     case "spent":
+      return "border-expense/50 bg-expense text-white shadow-[0_6px_20px_-6px_rgba(180,72,47,0.4)]";
+    case "left":
+      return "border-balance/50 bg-balance text-white shadow-[0_6px_20px_-6px_rgba(60,95,110,0.4)]";
     case "category":
-    case "investment":
-      return "border-white/25 bg-[var(--node-standard)] text-white";
+      if (node.tone === "income") {
+        return "border-income/40 bg-surface-2 text-foreground hover:border-income";
+      }
+      return "border-expense/40 bg-surface-2 text-foreground hover:border-expense";
     case "transaction":
+      if (node.tone === "income") {
+        return "border-income/30 bg-income-soft text-foreground hover:border-income/60";
+      }
+      return "border-expense/30 bg-expense-soft text-foreground hover:border-expense/60";
+    case "investment":
+      return "border-pending/40 bg-pending-soft text-pending";
     case "forecast":
-      return "border-[var(--node-secondary-text)]/10 bg-[var(--node-secondary)] text-[var(--node-secondary-text)]";
+      return "border-dashed border-forecast/60 bg-forecast/15 text-forecast";
     default:
       return "border-border bg-surface text-foreground";
   }
 }
 
 function edgeStrokeColor(edge: Edge): string {
-  switch (edge.to.kind) {
-    case "root":
-    case "month":
-    case "week":
-    case "date":
-    case "left":
-      return "var(--node-primary)";
-    case "income":
-    case "spent":
-    case "category":
-    case "investment":
-      return "var(--node-standard)";
-    case "transaction":
-    case "forecast":
-      return "var(--node-secondary)";
-    default:
-      return "var(--node-edge)";
-  }
+  if (edge.to.tone === "income" || edge.to.kind === "income") return "var(--income)";
+  if (edge.to.tone === "expense" || edge.to.kind === "spent") return "var(--expense)";
+  if (edge.to.tone === "balance" || edge.to.kind === "left") return "var(--balance)";
+  if (edge.to.kind === "forecast") return "var(--forecast)";
+  if (edge.to.kind === "investment") return "var(--pending)";
+  if (edge.to.kind === "month") return "var(--primary)";
+  if (edge.to.kind === "week") return "var(--border-strong)";
+  return "var(--node-edge)";
 }
 
 export interface ContextAction {
@@ -212,8 +225,27 @@ export function TreeCanvas({
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerLeave={onPointerUp}
-
     >
+      {/* ── Tree Structure Guide Bar ── */}
+      <div className="glass-panel pointer-events-none absolute top-3.5 left-3.5 z-20 hidden md:flex items-center gap-1.5 rounded-2xl px-3 py-1.5 text-[11px] font-medium text-muted-foreground shadow-xs">
+        <span className="font-semibold text-foreground flex items-center gap-1">
+          <span>🌳</span> Hierarchy:
+        </span>
+        <span className="text-foreground/80">Period</span>
+        <span className="text-muted-foreground/50">→</span>
+        <span className="text-foreground/80">Month</span>
+        <span className="text-muted-foreground/50">→</span>
+        <span className="text-foreground/80">Week</span>
+        <span className="text-muted-foreground/50">→</span>
+        <span className="text-foreground/80">Day</span>
+        <span className="text-muted-foreground/50">→</span>
+        <span className="text-income font-semibold">Received</span>
+        <span className="text-muted-foreground/40">/</span>
+        <span className="text-expense font-semibold">Spent</span>
+        <span className="text-muted-foreground/40">/</span>
+        <span className="text-balance font-semibold">Left</span>
+      </div>
+
       <div
         className="absolute top-0 left-0 origin-top-left"
         style={{
@@ -308,7 +340,9 @@ export function TreeCanvas({
                   {node.icon && <span className="text-xs">{node.icon}</span>}
                   <span className="truncate">{node.label}</span>
                 </div>
-                <div className="stat-figure mt-1 truncate text-[17px] leading-tight">
+                <div className="stat-figure mt-1 truncate text-[17px] leading-tight font-bold">
+                  {node.kind === "income" || (node.kind === "transaction" && node.tone === "income") ? "+" : ""}
+                  {node.kind === "spent" || (node.kind === "transaction" && node.tone === "expense") ? "−" : ""}
                   {formatMoney(node.amount, currency)}
                 </div>
                 {node.balanceBefore !== undefined && node.balanceAfter !== undefined && (
@@ -443,7 +477,32 @@ export function TreeCanvas({
         </div>
       )}
 
-      <div className="glass-panel absolute right-4 bottom-4 flex items-center gap-1 rounded-xl p-1">
+      <div className="glass-panel absolute right-4 bottom-4 flex items-center gap-1 rounded-xl p-1 z-20 shadow-sm">
+        <IconBtn
+          onClick={() => {
+            if (collapsed.size === 0) {
+              // Collapse to high level: collapse all with children except root
+              const toCollapse: string[] = [];
+              function walk(n: TreeNode) {
+                if (n.children.length > 0 && n.id !== "root") toCollapse.push(n.id);
+                n.children.forEach(walk);
+              }
+              walk(root);
+              toCollapse.forEach((id) => onToggle(id));
+            } else {
+              // Expand all: toggle every collapsed node
+              Array.from(collapsed).forEach((id) => onToggle(id));
+            }
+          }}
+          label={collapsed.size === 0 ? "Collapse branches" : "Expand all branches"}
+        >
+          {collapsed.size === 0 ? (
+            <FoldVertical className="size-4" />
+          ) : (
+            <UnfoldVertical className="size-4" />
+          )}
+        </IconBtn>
+        <div className="h-4 w-px bg-border/80 mx-0.5" />
         <IconBtn onClick={() => zoom(-1)} label="Zoom out">
           <Minus className="size-4" />
         </IconBtn>

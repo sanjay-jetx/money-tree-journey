@@ -1,4 +1,5 @@
 import { addDays, format, subDays } from "date-fns";
+import { DEFAULT_BUDGET_CONFIG, EMPTY_BUDGET_CONFIG } from "./budget";
 import { ISO } from "./calc";
 import type { Debt, Investment, MoneyState, PaymentMethod, Transaction } from "./types";
 
@@ -190,6 +191,7 @@ export function createDemoState(): MoneyState {
     transactions,
     debts,
     investments,
+    budgetConfig: DEFAULT_BUDGET_CONFIG,
   };
 }
 
@@ -206,5 +208,6 @@ export function createEmptyState(): MoneyState {
     transactions: [],
     debts: [],
     investments: [],
+    budgetConfig: EMPTY_BUDGET_CONFIG,
   };
 }
