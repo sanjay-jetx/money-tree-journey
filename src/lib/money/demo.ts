@@ -1,6 +1,6 @@
 import { addDays, format, subDays } from "date-fns";
 import { ISO } from "./calc";
-import type { Debt, MoneyState, PaymentMethod, Transaction } from "./types";
+import type { Debt, Investment, MoneyState, PaymentMethod, Transaction } from "./types";
 
 let seed = 20260829;
 function rnd() {
@@ -147,6 +147,37 @@ export function createDemoState(): MoneyState {
     },
   ];
 
+  const investments: Investment[] = [
+    {
+      id: id("inv"),
+      name: "Sovereign gold bond",
+      kind: "gold",
+      principal: 15000,
+      annualRate: 8.5,
+      interestMode: "compound",
+      startDate: format(subDays(new Date(), 420), ISO),
+      notes: "Yearly interest credited to bank",
+    },
+    {
+      id: id("inv"),
+      name: "Index fund SIP",
+      kind: "mutual_fund",
+      principal: 12000,
+      annualRate: 12,
+      interestMode: "compound",
+      startDate: format(subDays(new Date(), 240), ISO),
+    },
+    {
+      id: id("inv"),
+      name: "Bank fixed deposit",
+      kind: "fd",
+      principal: 20000,
+      annualRate: 7.1,
+      interestMode: "simple",
+      startDate: format(subDays(new Date(), 150), ISO),
+    },
+  ];
+
   return {
     startingBalance: 10000,
     startDate,
@@ -158,6 +189,7 @@ export function createDemoState(): MoneyState {
     accentIntensity: 3,
     transactions,
     debts,
+    investments,
   };
 }
 
@@ -173,5 +205,6 @@ export function createEmptyState(): MoneyState {
     accentIntensity: 3,
     transactions: [],
     debts: [],
+    investments: [],
   };
 }
