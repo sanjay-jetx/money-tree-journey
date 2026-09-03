@@ -6,7 +6,7 @@ import type { AccentName } from "./accent";
 import { balanceOn, formatMoney, todayISO } from "./calc";
 import { createDemoState, createEmptyState } from "./demo";
 import { EMPTY_FILTERS } from "./types";
-import type { Debt, Filters, MoneyState, Transaction, ViewMode } from "./types";
+import type { Debt, Filters, Investment, MoneyState, Transaction, ViewMode } from "./types";
 
 const STORAGE_KEY = "moneytree.state.v1";
 
@@ -30,6 +30,9 @@ export interface MoneyStore {
   addDebt: (debt: Omit<Debt, "id">) => void;
   updateDebt: (id: string, patch: Partial<Debt>) => void;
   deleteDebt: (id: string) => void;
+  addInvestment: (inv: Omit<Investment, "id">) => void;
+  updateInvestment: (id: string, patch: Partial<Investment>) => void;
+  deleteInvestment: (id: string) => void;
   setStartingBalance: (amount: number) => void;
   setOverdraft: (value: boolean) => void;
   toggleTheme: () => void;
@@ -138,6 +141,29 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, debts: prev.debts.filter((d) => d.id !== id) }));
   }, []);
 
+  const addInvestment = useCallback((inv: Omit<Investment, "id">) => {
+    if (inv.principal <= 0) {
+      toast.error("Invested amount must be greater than zero");
+      return;
+    }
+    setState((prev) => ({
+      ...prev,
+      investments: [...prev.investments, { ...inv, id: newId("inv") }],
+    }));
+    toast.success(`${inv.name} added to your investments`);
+  }, []);
+
+  const updateInvestment = useCallback((id: string, patch: Partial<Investment>) => {
+    setState((prev) => ({
+      ...prev,
+      investments: prev.investments.map((i) => (i.id === id ? { ...i, ...patch } : i)),
+    }));
+  }, []);
+
+  const deleteInvestment = useCallback((id: string) => {
+    setState((prev) => ({ ...prev, investments: prev.investments.filter((i) => i.id !== id) }));
+  }, []);
+
   const value = useMemo<MoneyStore>(
     () => ({
       state,
@@ -155,6 +181,9 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       addDebt,
       updateDebt,
       deleteDebt,
+      addInvestment,
+      updateInvestment,
+      deleteInvestment,
       setStartingBalance: (amount: number) =>
         setState((prev) => ({ ...prev, startingBalance: Math.max(0, amount) })),
       setOverdraft: (value: boolean) => setState((prev) => ({ ...prev, overdraft: value })),
@@ -186,6 +215,9 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       addDebt,
       updateDebt,
       deleteDebt,
+      addInvestment,
+      updateInvestment,
+      deleteInvestment,
       lastAddedId,
     ],
   );

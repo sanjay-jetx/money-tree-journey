@@ -42,6 +42,7 @@ export interface MoneyState {
   accentIntensity: number;
   transactions: Transaction[];
   debts: Debt[];
+  investments: Investment[];
 }
 
 export interface Filters {
@@ -138,3 +139,42 @@ export const EMPTY_FILTERS: Filters = {
   from: null,
   to: null,
 };
+
+export type InvestmentKind = "gold" | "silver" | "stocks" | "mutual_fund" | "fd" | "crypto" | "other";
+export type InterestMode = "simple" | "compound" | "none";
+
+export interface Investment {
+  id: string;
+  name: string;
+  kind: InvestmentKind;
+  /** Amount originally invested. */
+  principal: number;
+  /** Annual interest / expected return in percent. */
+  annualRate: number;
+  interestMode: InterestMode;
+  /** ISO date, yyyy-MM-dd — when the money was invested. */
+  startDate: string;
+  /** Optional manual override of today's market value. */
+  currentValue?: number | undefined;
+  notes?: string | undefined;
+}
+
+export interface InvestmentKindDef {
+  kind: InvestmentKind;
+  label: string;
+  icon: string;
+}
+
+export const INVESTMENT_KINDS: InvestmentKindDef[] = [
+  { kind: "gold", label: "Gold", icon: "🥇" },
+  { kind: "silver", label: "Silver", icon: "🥈" },
+  { kind: "stocks", label: "Stocks", icon: "📊" },
+  { kind: "mutual_fund", label: "Mutual fund", icon: "🧺" },
+  { kind: "fd", label: "Fixed deposit", icon: "🏦" },
+  { kind: "crypto", label: "Crypto", icon: "🪙" },
+  { kind: "other", label: "Other", icon: "✨" },
+];
+
+export function investmentKindDef(kind: InvestmentKind): InvestmentKindDef {
+  return INVESTMENT_KINDS.find((k) => k.kind === kind) ?? { kind, label: kind, icon: "✨" };
+}

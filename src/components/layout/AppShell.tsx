@@ -13,6 +13,7 @@ const NAV = [
   { to: "/time-machine", label: "Time Machine", icon: "⏳" },
   { to: "/income", label: "Income", icon: "💰" },
   { to: "/spending", label: "Spending", icon: "💸" },
+  { to: "/investments", label: "Investments", icon: "📈" },
   { to: "/owed", label: "Owed", icon: "🤝" },
   { to: "/settings", label: "Settings", icon: "⚙️" },
 ] as const;
