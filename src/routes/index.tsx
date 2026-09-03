@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { addDays, addMonths, addYears, format, parseISO, startOfWeek, subDays } from "date-fns";
-import { CalendarCheck, ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
+import { CalendarCheck, ChevronLeft, ChevronRight, Plus, Search, SlidersHorizontal, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { StatsBar } from "@/components/dashboard/StatsBar";
 import { NodeDetailPanel } from "@/components/tree/NodeDetailPanel";
 import { ColorLegend } from "@/components/tree/ColorLegend";
@@ -101,8 +102,18 @@ const VIEWS: ViewMode[] = ["day", "week", "month", "year"];
 
 function TreePage() {
   const search = Route.useSearch();
-  const { state, ready, view, setView, anchorDate, setAnchorDate, filters, setFilters, resetFilters } =
-    useMoney();
+  const {
+    state,
+    ready,
+    view,
+    setView,
+    anchorDate,
+    setAnchorDate,
+    filters,
+    setFilters,
+    resetFilters,
+    deleteTransaction,
+  } = useMoney();
   const { openDialog } = useTxDialog();
   const today = useMemo(() => format(new Date(), ISO), []);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -131,6 +142,15 @@ function TreePage() {
     () => buildTree(state, { view, from: range.from, to: range.to, filteredTx, projection }),
     [state, view, range.from, range.to, filteredTx, projection],
   );
+
+  const periodHasTx = useMemo(() => {
+    return state.transactions.some((t) => t.date >= range.from && t.date <= range.to);
+  }, [state.transactions, range.from, range.to]);
+
+  const latestActiveDate = useMemo(() => {
+    if (!state.transactions.length) return null;
+    return [...state.transactions].sort((a, b) => b.date.localeCompare(a.date))[0]?.date ?? null;
+  }, [state.transactions]);
 
   const focusToday = useCallback(() => {
     setCollapsed(view === "year" ? todayFocusCollapsed(root, today) : defaultCollapsed(root));
@@ -378,6 +398,31 @@ function TreePage() {
         </label>
       </div>
 
+      {!periodHasTx && latestActiveDate && hasData && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-primary/25 bg-surface-2/80 px-4 py-2.5 text-xs text-muted-foreground backdrop-blur shadow-xs">
+          <span>
+            No transactions in this {view} ({range.from} – {range.to}). Showing period opening balance.
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setAnchorDate(latestActiveDate)}
+            >
+              Jump to Latest Activity ({formatFullDate(latestActiveDate)})
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs bg-primary text-primary-foreground"
+              onClick={() => openDialog({ kind: "expense", date: anchorDate })}
+            >
+              + Add Entry Here
+            </Button>
+          </div>
+        </div>
+      )}
+
       {!ready ? (
         <div className="h-[560px] animate-pulse rounded-3xl bg-secondary/50" />
       ) : hasData ? (
@@ -387,6 +432,19 @@ function TreePage() {
             collapsed={collapsed}
             onToggle={toggle}
             onSelect={setSelected}
+            onAddNode={(node) =>
+              openDialog({
+                kind: "expense",
+                date: node.date ?? anchorDate,
+                category: node.category,
+              })
+            }
+            onDeleteNode={(node) => {
+              if (node.txId) {
+                deleteTransaction(node.txId);
+                toast.success("Node removed from tree");
+              }
+            }}
             selectedId={selected?.id ?? null}
             highlightIds={highlightIds}
             currency={state.currency}
@@ -423,19 +481,27 @@ function TreePage() {
           >
             <MenuItem
               onClick={() => {
-                openDialog({ kind: "expense", date: menu.node.date ?? undefined });
+                openDialog({
+                  kind: "expense",
+                  date: menu.node.date ?? anchorDate,
+                  category: menu.node.category,
+                });
                 setMenu(null);
               }}
             >
-              Add expense
+              <Plus className="size-3.5 mr-1" /> + Add Expense Node
             </MenuItem>
             <MenuItem
               onClick={() => {
-                openDialog({ kind: "income", date: menu.node.date ?? undefined });
+                openDialog({
+                  kind: "income",
+                  date: menu.node.date ?? anchorDate,
+                  category: menu.node.category,
+                });
                 setMenu(null);
               }}
             >
-              Add income
+              <Plus className="size-3.5 mr-1" /> + Add Income Node
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -453,6 +519,18 @@ function TreePage() {
                 }}
               >
                 {menu.node.collapsed ? "Expand branch" : "Collapse branch"}
+              </MenuItem>
+            )}
+            {menu.node.txId && (
+              <MenuItem
+                className="text-destructive font-semibold"
+                onClick={() => {
+                  deleteTransaction(menu.node.txId!);
+                  setMenu(null);
+                  toast.success("Node removed from tree");
+                }}
+              >
+                <Trash2 className="size-3.5 mr-1" /> 🗑️ Delete Node from Tree
               </MenuItem>
             )}
           </div>
@@ -496,12 +574,23 @@ function Chip({
   );
 }
 
-function MenuItem({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+function MenuItem({
+  onClick,
+  className,
+  children,
+}: {
+  onClick: () => void;
+  className?: string | undefined;
+  children: React.ReactNode;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2"
+      className={cn(
+        "w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-2 flex items-center",
+        className,
+      )}
     >
       {children}
     </button>

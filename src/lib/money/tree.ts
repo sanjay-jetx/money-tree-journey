@@ -300,11 +300,19 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
     (d) => d.date >= opts.from && d.date <= opts.to,
   );
   const visibleIds = new Set(opts.filteredTx.map((t) => t.id));
-  const yearLabel = opts.from.slice(0, 4);
-  const scoped = days
-    .map((d) => ({ ...d, transactions: d.transactions.filter((t) => visibleIds.has(t.id)) }))
-    .filter((d) => d.transactions.length > 0 || opts.view === "day");
+  const scopedAll = days.map((d) => ({
+    ...d,
+    transactions: d.transactions.filter((t) => visibleIds.has(t.id)),
+  }));
+  const scopedWithTx = scopedAll.filter((d) => d.transactions.length > 0);
+  const scoped =
+    opts.view === "day" || opts.view === "week"
+      ? scopedAll
+      : scopedWithTx.length > 0
+        ? scopedWithTx
+        : scopedAll;
 
+  const yearLabel = opts.from.slice(0, 4);
   const rootAmount = scoped.length ? scoped[0]!.opening : state.startingBalance;
   const children: TreeNode[] = [];
 
@@ -359,11 +367,8 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
         });
       });
   } else if (opts.view === "week") {
-    // Week: Root → Week Node → Days
-    const weekNodes = buildWeekNodes(scoped, opts.from, opts.view);
-    weekNodes.forEach((w) => {
-      children.push({ ...w, collapsedByDefault: false });
-    });
+    // Week: Root (Week) → Days of the week directly
+    scoped.forEach((d) => children.push(dateNode(d, opts.view)));
   } else {
     // Day: Root → Day directly
     scoped.forEach((d) => children.push(dateNode(d, opts.view)));

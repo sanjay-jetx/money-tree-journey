@@ -31,6 +31,7 @@ interface DialogState {
   open: boolean;
   kind: Kind;
   date?: string | undefined;
+  category?: string | undefined;
   editing?: Transaction | undefined;
 }
 
@@ -97,7 +98,7 @@ export function TransactionDialogProvider({ children }: { children: ReactNode })
       return;
     }
     setAmount("");
-    setCategory(dialog.kind === "income" ? "Salary" : "Food");
+    setCategory(dialog.category ?? (dialog.kind === "income" ? "Salary" : "Food"));
     setSubcategory("");
     setDate(dialog.date ?? format(new Date(), ISO));
     setTime(format(new Date(), "HH:mm"));

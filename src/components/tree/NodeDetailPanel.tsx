@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Pencil, Trash2, TreePine } from "lucide-react";
+import { Pencil, Plus, Trash2, TreePine } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
@@ -11,6 +12,7 @@ import {
   formatMoney,
   formatTime,
   sum,
+  todayISO,
 } from "@/lib/money/calc";
 import { useMoney } from "@/lib/money/store";
 import type { PositionedNode } from "@/lib/money/tree";
@@ -114,24 +116,34 @@ export function NodeDetailPanel({ node, onClose }: Props) {
               </div>
             )}
 
-            {node.date && (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => openDialog({ kind: "expense", date: node.date })}
-                >
-                  + Expense on this date
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => openDialog({ kind: "income", date: node.date })}
-                >
-                  + Income
-                </Button>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-2 pt-3 border-t border-border">
+              <Button
+                size="sm"
+                className="gap-1.5 bg-expense hover:bg-expense/90 text-white shadow-xs"
+                onClick={() =>
+                  openDialog({
+                    kind: "expense",
+                    date: node.date ?? todayISO(),
+                    category: node.category,
+                  })
+                }
+              >
+                <Plus className="size-3.5" /> + Add Expense Node
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5 bg-income hover:bg-income/90 text-white shadow-xs"
+                onClick={() =>
+                  openDialog({
+                    kind: "income",
+                    date: node.date ?? todayISO(),
+                    category: node.category,
+                  })
+                }
+              >
+                <Plus className="size-3.5" /> + Add Income Node
+              </Button>
+            </div>
           </div>
         )}
       </SheetContent>
@@ -172,12 +184,20 @@ function TransactionDetail({
           </div>
         ))}
       </dl>
-      <div className="flex gap-2">
-        <Button size="sm" variant="secondary" className="gap-1.5" onClick={onEdit}>
-          <Pencil className="size-3.5" /> Edit
+      <div className="flex gap-2 pt-1">
+        <Button size="sm" variant="secondary" className="gap-1.5 flex-1" onClick={onEdit}>
+          <Pencil className="size-3.5" /> Edit Entry
         </Button>
-        <Button size="sm" variant="destructive" className="gap-1.5" onClick={onDelete}>
-          <Trash2 className="size-3.5" /> Delete
+        <Button
+          size="sm"
+          variant="destructive"
+          className="gap-1.5 flex-1"
+          onClick={() => {
+            onDelete();
+            toast.success("Node removed from tree");
+          }}
+        >
+          <Trash2 className="size-3.5" /> Remove Node
         </Button>
       </div>
     </div>
@@ -304,9 +324,13 @@ export function TxRow({
       </button>
       <button
         type="button"
-        onClick={() => deleteTransaction(tx.id)}
+        onClick={() => {
+          deleteTransaction(tx.id);
+          toast.success("Node removed from tree");
+        }}
         aria-label="Delete transaction"
-        className="text-muted-foreground hover:text-destructive"
+        title="Remove node from tree"
+        className="text-muted-foreground hover:text-destructive p-1 rounded hover:bg-destructive/10 transition-colors"
       >
         <Trash2 className="size-3.5" />
       </button>

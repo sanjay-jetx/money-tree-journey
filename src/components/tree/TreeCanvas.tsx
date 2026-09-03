@@ -7,6 +7,7 @@ import {
   Minus,
   Plus,
   RotateCcw,
+  Trash2,
   UnfoldVertical,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -72,6 +73,8 @@ interface Props {
   collapsed: Set<string>;
   onToggle: (id: string) => void;
   onSelect: (node: PositionedNode) => void;
+  onAddNode?: ((node: PositionedNode) => void) | undefined;
+  onDeleteNode?: ((node: PositionedNode) => void) | undefined;
   selectedId?: string | null | undefined;
   highlightIds?: Set<string> | undefined;
   currency: string;
@@ -84,6 +87,8 @@ export function TreeCanvas({
   collapsed,
   onToggle,
   onSelect,
+  onAddNode,
+  onDeleteNode,
   selectedId,
   highlightIds,
   currency,
@@ -363,6 +368,36 @@ export function TreeCanvas({
                 )}
                 {node.sublabel && (
                   <div className="truncate text-[10px] opacity-70">{node.sublabel}</div>
+                )}
+
+                {/* Quick Add Node button */}
+                {onAddNode && node.kind !== "forecast" && node.kind !== "transaction" && (
+                  <span
+                    data-node
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAddNode(node);
+                    }}
+                    title="Add entry under this node"
+                    className="absolute top-2 right-2 flex size-5 items-center justify-center rounded-full bg-white/20 hover:bg-white/40 text-current shadow-xs transition-all hover:scale-110 active:scale-95 z-10 cursor-pointer"
+                  >
+                    <Plus className="size-3" />
+                  </span>
+                )}
+
+                {/* Quick Delete Node button for transactions */}
+                {onDeleteNode && node.kind === "transaction" && node.txId && (
+                  <span
+                    data-node
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteNode(node);
+                    }}
+                    title="Remove this node from tree"
+                    className="absolute top-2 right-2 flex size-5 items-center justify-center rounded-full bg-destructive/80 hover:bg-destructive text-white shadow-xs transition-all hover:scale-110 active:scale-95 z-10 cursor-pointer"
+                  >
+                    <Trash2 className="size-3" />
+                  </span>
                 )}
 
               </button>

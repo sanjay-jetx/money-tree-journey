@@ -1,9 +1,10 @@
+import { format, subDays } from "date-fns";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { accentVars } from "./accent";
 import type { AccentName } from "./accent";
-import { balanceOn, formatMoney, todayISO } from "./calc";
+import { ISO, balanceOn, formatMoney, todayISO } from "./calc";
 import { DEFAULT_BUDGET_CONFIG, EMPTY_BUDGET_CONFIG } from "./budget";
 import { fetchCloudState, pushCloudState } from "./cloud";
 import { createDemoState, createEmptyState } from "./demo";
@@ -89,12 +90,30 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       const raw = window.localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as MoneyState;
-        setState({
-          ...createEmptyState(),
-          ...parsed,
-          budgetConfig:
-            parsed.budgetConfig ?? (parsed.isDemo ? DEFAULT_BUDGET_CONFIG : EMPTY_BUDGET_CONFIG),
-        });
+        const latestTx = parsed.transactions.length
+          ? [...parsed.transactions].sort((a, b) => b.date.localeCompare(a.date))[0]
+          : null;
+        const isStaleDemo =
+          parsed.isDemo &&
+          latestTx &&
+          latestTx.date < format(subDays(new Date(), 2), ISO);
+
+        if (isStaleDemo) {
+          const fresh = createDemoState();
+          setState({
+            ...fresh,
+            theme: parsed.theme ?? fresh.theme,
+            accent: parsed.accent ?? fresh.accent,
+            accentIntensity: parsed.accentIntensity ?? fresh.accentIntensity,
+          });
+        } else {
+          setState({
+            ...createEmptyState(),
+            ...parsed,
+            budgetConfig:
+              parsed.budgetConfig ?? (parsed.isDemo ? DEFAULT_BUDGET_CONFIG : EMPTY_BUDGET_CONFIG),
+          });
+        }
       } else {
         setState(createDemoState());
       }
