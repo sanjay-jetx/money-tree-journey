@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, RotateCcw, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
 import { Button } from "@/components/ui/button";
-import { debtTotals, formatFullDate, formatMoney } from "@/lib/money/calc";
+import { debtTotals, formatFullDate, formatMoney, todayISO } from "@/lib/money/calc";
 import { useMoney } from "@/lib/money/store";
 import type { Debt } from "@/lib/money/types";
 
@@ -23,12 +24,56 @@ export const Route = createFileRoute("/owed")({
 });
 
 function OwedPage() {
-  const { state, ready, updateDebt, deleteDebt } = useMoney();
+  const { state, ready, updateDebt, deleteDebt, addTransaction } = useMoney();
   const { openDialog } = useTxDialog();
   const totals = debtTotals(state.debts);
 
   const owedToMe = state.debts.filter((d) => d.direction === "owed_to_me");
   const iOwe = state.debts.filter((d) => d.direction === "i_owe");
+
+  /** Called when the ✅ button is pressed on a pending debt. */
+  function settleDebt(d: Debt) {
+    if (d.status !== "pending") {
+      // Undo: just flip back to pending, no transaction change
+      updateDebt(d.id, { status: "pending" });
+      return;
+    }
+
+    // Mark as paid
+    updateDebt(d.id, { status: "paid" });
+
+    const today = todayISO();
+    const now = new Date();
+    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+    if (d.direction === "owed_to_me") {
+      // Money received back → Income
+      addTransaction({
+        type: "income",
+        amount: d.amount,
+        category: "Other Income",
+        subcategory: "Debt Collected",
+        description: `${d.person} paid back${d.reason ? ` · ${d.reason}` : ""}`,
+        paymentMethod: "Cash",
+        date: today,
+        time: timeStr,
+      });
+      toast.success(`₹${d.amount.toLocaleString("en-IN")} received from ${d.person} — added as income 🌱`);
+    } else {
+      // Money paid out → Expense
+      addTransaction({
+        type: "expense",
+        amount: d.amount,
+        category: "Other",
+        subcategory: "Debt Paid",
+        description: `Paid ${d.person}${d.reason ? ` · ${d.reason}` : ""}`,
+        paymentMethod: "Cash",
+        date: today,
+        time: timeStr,
+      });
+      toast.success(`₹${d.amount.toLocaleString("en-IN")} paid to ${d.person} — added as expense 💸`);
+    }
+  }
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
@@ -72,18 +117,14 @@ function OwedPage() {
           title="Owed to me"
           debts={owedToMe}
           currency={state.currency}
-          onToggle={(d) =>
-            updateDebt(d.id, { status: d.status === "pending" ? "paid" : "pending" })
-          }
+          onToggle={settleDebt}
           onDelete={(d) => deleteDebt(d.id)}
         />
         <DebtList
           title="I owe"
           debts={iOwe}
           currency={state.currency}
-          onToggle={(d) =>
-            updateDebt(d.id, { status: d.status === "pending" ? "paid" : "pending" })
-          }
+          onToggle={settleDebt}
           onDelete={(d) => deleteDebt(d.id)}
         />
       </div>
