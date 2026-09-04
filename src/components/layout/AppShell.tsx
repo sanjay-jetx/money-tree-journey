@@ -1,7 +1,8 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Menu, Moon, Plus, Sun } from "lucide-react";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { LogOut, Menu, Moon, Plus, Sun } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
+import { logoutFn } from "@/fns/authFns";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -43,6 +44,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { openDialog } = useTxDialog();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [moreOpen, setMoreOpen] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleLogout() {
+    try {
+      await logoutFn();
+    } finally {
+      await navigate({ to: "/login" });
+    }
+  }
 
   const isMoreActive =
     !MOBILE_NAV_LEFT.some((i) => i.to === pathname) &&
@@ -111,6 +121,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               Demo data
             </span>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="gap-1.5 text-sidebar-muted hover:bg-white/10 hover:text-sidebar-foreground"
+            title="Sign out"
+          >
+            <LogOut className="size-4" />
+            Sign out
+          </Button>
         </div>
       </aside>
 

@@ -7,7 +7,7 @@ import {
   sortInvestments,
 } from "./investments";
 import { categoryDef, investmentKindDef } from "./types";
-import type { MoneyState, Transaction, ViewMode } from "./types";
+import type { Debt, MoneyState, Transaction, ViewMode } from "./types";
 
 export type NodeKind =
   | "root"
@@ -110,6 +110,25 @@ function txNode(t: Transaction, balances: BalanceMap): TreeNode {
   };
 }
 
+function debtNode(d: Debt): TreeNode {
+  const isOwedToMe = d.direction === "owed_to_me";
+  return {
+    id: `debt-${d.id}`,
+    kind: "transaction",
+    tone: "pending",
+    icon: isOwedToMe ? "🤝" : "💸",
+    label: isOwedToMe ? `${d.person} owes you` : `You owe ${d.person}`,
+    amount: d.amount,
+    sublabel: d.reason || (isOwedToMe ? "Owed to me" : "I owe"),
+    date: d.date,
+    txIds: [],
+    children: [],
+    // Debts are informational — they do not affect the running balance
+    balanceBefore: undefined,
+    balanceAfter: undefined,
+  };
+}
+
 function categoryNodes(
   txs: Transaction[],
   keyPrefix: string,
@@ -163,6 +182,7 @@ function categoryNodes(
 function dateNode(
   day: { date: string; opening: number; income: number; spent: number; closing: number; transactions: Transaction[] },
   view: ViewMode,
+  dayDebts: Debt[] = [],
 ): TreeNode {
   const children: TreeNode[] = [];
   const incomeTx = day.transactions.filter((t) => t.type === "income");
@@ -213,6 +233,11 @@ function dateNode(
     });
   }
 
+  // Inject pending debt nodes (informational, no balance impact)
+  for (const d of dayDebts) {
+    children.push(debtNode(d));
+  }
+
   children.push({
     id: `${day.date}-left`,
     kind: "left",
@@ -250,6 +275,7 @@ function buildWeekNodes(
   list: { date: string; opening: number; income: number; spent: number; closing: number; transactions: Transaction[] }[],
   groupKey: string,
   view: ViewMode,
+  debtsByDate: Map<string, Debt[]>,
 ): TreeNode[] {
   const byWeek = new Map<string, typeof list>();
   list.forEach((d) => {
@@ -279,7 +305,7 @@ function buildWeekNodes(
         sublabel: parts.join(" · "),
         date: first.date,
         txIds: days.flatMap((d) => d.transactions.map((t) => t.id)),
-        children: days.map((d) => dateNode(d, view)),
+        children: days.map((d) => dateNode(d, view, debtsByDate.get(d.date) ?? [])),
         collapsedByDefault: true,
         balanceBefore: first.opening,
         balanceAfter: last.closing,
@@ -312,6 +338,16 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
         ? scopedWithTx
         : scopedAll;
 
+  // Build a per-date map of pending debts so they can be injected into date nodes
+  const debtsByDate = new Map<string, Debt[]>();
+  for (const d of state.debts ?? []) {
+    if (d.date >= opts.from && d.date <= opts.to) {
+      const list = debtsByDate.get(d.date) ?? [];
+      list.push(d);
+      debtsByDate.set(d.date, list);
+    }
+  }
+
   const yearLabel = opts.from.slice(0, 4);
   const rootAmount = scoped.length ? scoped[0]!.opening : state.startingBalance;
   const children: TreeNode[] = [];
@@ -335,7 +371,7 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
           sublabel: `${list.length} day${list.length > 1 ? "s" : ""} · ₹${sum(list.map((d) => d.spent)).toLocaleString("en-IN")} spent`,
           date: `${month}-01`,
           txIds: list.flatMap((d) => d.transactions.map((t) => t.id)),
-          children: buildWeekNodes(list, month, opts.view),
+          children: buildWeekNodes(list, month, opts.view, debtsByDate),
           collapsedByDefault: true,
           balanceBefore: list[0]!.opening,
           balanceAfter: list[list.length - 1]!.closing,
@@ -360,7 +396,7 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
           sublabel: `${list.length} day${list.length > 1 ? "s" : ""} · ₹${sum(list.map((d) => d.spent)).toLocaleString("en-IN")} spent`,
           date: `${month}-01`,
           txIds: list.flatMap((d) => d.transactions.map((t) => t.id)),
-          children: buildWeekNodes(list, month, opts.view),
+          children: buildWeekNodes(list, month, opts.view, debtsByDate),
           collapsedByDefault: false,
           balanceBefore: list[0]!.opening,
           balanceAfter: list[list.length - 1]!.closing,
@@ -368,10 +404,10 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
       });
   } else if (opts.view === "week") {
     // Week: Root (Week) → Days of the week directly
-    scoped.forEach((d) => children.push(dateNode(d, opts.view)));
+    scoped.forEach((d) => children.push(dateNode(d, opts.view, debtsByDate.get(d.date) ?? [])));
   } else {
     // Day: Root → Day directly
-    scoped.forEach((d) => children.push(dateNode(d, opts.view)));
+    scoped.forEach((d) => children.push(dateNode(d, opts.view, debtsByDate.get(d.date) ?? [])));
   }
 
   if (opts.projection) {
@@ -458,7 +494,7 @@ export function buildTree(state: MoneyState, opts: BuildOptions): TreeNode {
       : opts.view === "month"
         ? `${format(parseISO(`${opts.from.slice(0, 7)}-01`), "MMMM yyyy").toUpperCase()}`
         : opts.view === "week"
-          ? `WEEK OF ${formatDayLabel(opts.from)}`
+          ? `WEEK OF ${formatDayLabel(opts.from)} – ${formatDayLabel(opts.to)}`
           : `DAY ${formatDayLabel(opts.from)}`;
 
   return collapseRedundant({

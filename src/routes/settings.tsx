@@ -56,24 +56,12 @@ function SettingsPage() {
     loadDemo,
     clearAll,
     importState,
-    syncKey,
-    setSyncKey,
-    syncStatus,
-    lastSyncedAt,
-    syncToCloud,
-    restoreFromCloud,
   } = useMoney();
   const [balance, setBalance] = useState(String(state.startingBalance));
-  const [pairKeyInput, setPairKeyInput] = useState("");
   const [copied, setCopied] = useState(false);
+  void copied;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function copyKey() {
-    navigator.clipboard.writeText(syncKey);
-    setCopied(true);
-    toast.success("Sync key copied to clipboard");
-    setTimeout(() => setCopied(false), 2000);
-  }
 
   function exportJsonBackup() {
     const dataStr =
@@ -227,80 +215,19 @@ function SettingsPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold flex items-center gap-2">
-              <Cloud className="size-4 text-primary" /> Cloud Backend & Cross-Device Sync
+              <Cloud className="size-4 text-primary" /> Cloud Storage
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Persist your money tree across your phone, laptop, and other browsers.
+              Your money tree is automatically saved to the cloud after every change. No action needed.
             </p>
           </div>
-          <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold border ${
-              syncStatus === "synced"
-                ? "bg-income-soft text-income border-income/30"
-                : syncStatus === "syncing"
-                  ? "bg-pending-soft text-pending border-pending/30 animate-pulse"
-                  : "bg-surface-2 text-muted-foreground border-border"
-            }`}
-          >
-            {syncStatus === "synced"
-              ? "● Cloud Synced"
-              : syncStatus === "syncing"
-                ? "○ Syncing..."
-                : "● Ready to Sync"}
+          <span className="rounded-full px-2.5 py-1 text-xs font-semibold border bg-income-soft text-income border-income/30">
+            ● Auto-saving
           </span>
         </div>
-
-        {lastSyncedAt && (
-          <p className="text-[11px] text-muted-foreground">
-            Last synced: {formatTime(lastSyncedAt.slice(11, 16))}
-          </p>
-        )}
-
-        <div className="space-y-2 rounded-xl border border-border bg-surface-2/40 p-3.5">
-          <Label className="text-xs font-semibold">Your Device Sync Key</Label>
-          <div className="flex items-center gap-2">
-            <Input value={syncKey} readOnly className="font-mono text-xs bg-surface" />
-            <Button variant="secondary" size="sm" onClick={copyKey} className="gap-1 text-xs">
-              {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-              {copied ? "Copied" : "Copy"}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => syncToCloud()}
-              className="gap-1 text-xs"
-            >
-              <RefreshCw className="size-3.5" /> Sync Now
-            </Button>
-          </div>
-          <p className="text-[11px] text-muted-foreground">
-            Share or enter this key on your other devices to access the exact same money tree.
-          </p>
-        </div>
-
-        <div className="space-y-2 pt-1">
-          <Label className="text-xs font-semibold">Pair / Restore from Another Key</Label>
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Paste sync key (e.g. tree-xxxxxx)"
-              value={pairKeyInput}
-              onChange={(e) => setPairKeyInput(e.target.value)}
-              className="text-xs"
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={!pairKeyInput.trim()}
-              onClick={() => {
-                restoreFromCloud(pairKeyInput.trim());
-                setPairKeyInput("");
-              }}
-              className="text-xs shrink-0"
-            >
-              Restore Tree
-            </Button>
-          </div>
-        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Data is stored securely in Supabase and restored automatically each time you sign in. Export a JSON backup below for extra safety.
+        </p>
       </section>
 
       <section className="space-y-4 rounded-2xl border border-border bg-surface/60 p-5">

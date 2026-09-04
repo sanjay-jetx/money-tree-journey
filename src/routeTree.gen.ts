@@ -15,6 +15,7 @@ import { Route as GoalsRouteImport } from './routes/goals'
 import { Route as IncomeRouteImport } from './routes/income'
 import { Route as InsightsRouteImport } from './routes/insights'
 import { Route as InvestmentsRouteImport } from './routes/investments'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as OwedRouteImport } from './routes/owed'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SpendingRouteImport } from './routes/spending'
@@ -50,6 +51,11 @@ const InvestmentsRoute = InvestmentsRouteImport.update({
   path: '/investments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OwedRoute = OwedRouteImport.update({
   id: '/owed',
   path: '/owed',
@@ -78,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/income': typeof IncomeRoute
   '/insights': typeof InsightsRoute
   '/investments': typeof InvestmentsRoute
+  '/login': typeof LoginRoute
   '/owed': typeof OwedRoute
   '/settings': typeof SettingsRoute
   '/spending': typeof SpendingRoute
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/income': typeof IncomeRoute
   '/insights': typeof InsightsRoute
   '/investments': typeof InvestmentsRoute
+  '/login': typeof LoginRoute
   '/owed': typeof OwedRoute
   '/settings': typeof SettingsRoute
   '/spending': typeof SpendingRoute
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/income': typeof IncomeRoute
   '/insights': typeof InsightsRoute
   '/investments': typeof InvestmentsRoute
+  '/login': typeof LoginRoute
   '/owed': typeof OwedRoute
   '/settings': typeof SettingsRoute
   '/spending': typeof SpendingRoute
@@ -117,6 +126,7 @@ export interface FileRouteTypes {
     | '/income'
     | '/insights'
     | '/investments'
+    | '/login'
     | '/owed'
     | '/settings'
     | '/spending'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/income'
     | '/insights'
     | '/investments'
+    | '/login'
     | '/owed'
     | '/settings'
     | '/spending'
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/income'
     | '/insights'
     | '/investments'
+    | '/login'
     | '/owed'
     | '/settings'
     | '/spending'
@@ -154,6 +166,7 @@ export interface RootRouteChildren {
   IncomeRoute: typeof IncomeRoute
   InsightsRoute: typeof InsightsRoute
   InvestmentsRoute: typeof InvestmentsRoute
+  LoginRoute: typeof LoginRoute
   OwedRoute: typeof OwedRoute
   SettingsRoute: typeof SettingsRoute
   SpendingRoute: typeof SpendingRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvestmentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/owed': {
       id: '/owed'
       path: '/owed'
@@ -242,6 +262,7 @@ const rootRouteChildren: RootRouteChildren = {
   IncomeRoute: IncomeRoute,
   InsightsRoute: InsightsRoute,
   InvestmentsRoute: InvestmentsRoute,
+  LoginRoute: LoginRoute,
   OwedRoute: OwedRoute,
   SettingsRoute: SettingsRoute,
   SpendingRoute: SpendingRoute,

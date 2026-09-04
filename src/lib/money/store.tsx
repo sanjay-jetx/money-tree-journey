@@ -1,18 +1,19 @@
 import { format, subDays } from "date-fns";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { toast } from "sonner";
 import { accentVars } from "./accent";
 import type { AccentName } from "./accent";
 import { ISO, balanceOn, formatMoney, todayISO } from "./calc";
 import { DEFAULT_BUDGET_CONFIG, EMPTY_BUDGET_CONFIG } from "./budget";
-import { fetchCloudState, pushCloudState } from "./cloud";
 import { createDemoState, createEmptyState } from "./demo";
 import { EMPTY_FILTERS } from "./types";
 import type { Debt, Filters, Goal, Investment, MoneyState, Transaction, ViewMode } from "./types";
+import { loadStateFn, saveStateFn } from "../../fns/dataFns";
 
 const STORAGE_KEY = "moneytree.state.v1";
-const SYNC_KEY_STORAGE = "moneytree.syncKey.v1";
+/** Debounce delay before writing to cloud (ms) */
+const CLOUD_SAVE_DELAY = 1500;
 
 function newId(prefix: string) {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -61,12 +62,6 @@ export interface MoneyStore {
   clearAll: () => void;
   importState: (imported: Partial<MoneyState>) => void;
   lastAddedId: string | null;
-  syncKey: string;
-  setSyncKey: (key: string) => void;
-  syncStatus: "idle" | "syncing" | "synced" | "error";
-  lastSyncedAt: string | null;
-  syncToCloud: () => Promise<boolean>;
-  restoreFromCloud: (key?: string) => Promise<boolean>;
 }
 
 const MoneyContext = createContext<MoneyStore | null>(null);
@@ -78,96 +73,88 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
   const [view, setView] = useState<ViewMode>("week");
   const [anchorDate, setAnchorDate] = useState<string>(() => todayISO());
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
-  const [syncKey, setSyncKeyState] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      const saved = window.localStorage.getItem(SYNC_KEY_STORAGE);
-      if (saved) return saved;
-      const gen = `tree-${Math.random().toString(36).slice(2, 8)}`;
-      window.localStorage.setItem(SYNC_KEY_STORAGE, gen);
-      return gen;
-    }
-    return "default-tree";
-  });
-  const [syncStatus, setSyncStatus] = useState<"idle" | "syncing" | "synced" | "error">("idle");
-  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // ── Initial Load ─────────────────────────────────────────────────────────
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as MoneyState;
-        const latestTx = parsed.transactions.length
-          ? [...parsed.transactions].sort((a, b) => b.date.localeCompare(a.date))[0]
-          : null;
-        const isStaleDemo =
-          parsed.isDemo &&
-          latestTx &&
-          latestTx.date < format(subDays(new Date(), 2), ISO);
+    async function boot() {
+      // 1. Show localStorage instantly (fast start, offline resilience)
+      let localState: MoneyState | null = null;
+      try {
+        const raw = window.localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw) as MoneyState;
+          // Refresh stale demo data
+          const latestTx = parsed.transactions.length
+            ? [...parsed.transactions].sort((a, b) => b.date.localeCompare(a.date))[0]
+            : null;
+          const isStaleDemo =
+            parsed.isDemo &&
+            latestTx &&
+            latestTx.date < format(subDays(new Date(), 2), ISO);
 
-        if (isStaleDemo) {
-          const fresh = createDemoState();
-          setState({
-            ...fresh,
-            theme: parsed.theme ?? fresh.theme,
-            accent: parsed.accent ?? fresh.accent,
-            accentIntensity: parsed.accentIntensity ?? fresh.accentIntensity,
-          });
-        } else {
-          setState({
-            ...createEmptyState(),
-            ...parsed,
-            budgetConfig:
-              parsed.budgetConfig ?? (parsed.isDemo ? DEFAULT_BUDGET_CONFIG : EMPTY_BUDGET_CONFIG),
-          });
-        }
-      } else {
-        setState(createDemoState());
-      }
-    } catch {
-      setState(createDemoState());
-    }
-    setAnchorDate(todayISO());
-    setReady(true);
-
-    // Initial background cloud hydration
-    if (typeof window !== "undefined") {
-      const savedKey = window.localStorage.getItem(SYNC_KEY_STORAGE) || "default-tree";
-      fetchCloudState({ data: { syncKey: savedKey } })
-        .then((res) => {
-          if (res.success && res.state) {
-            setState(res.state);
-            setSyncStatus("synced");
-            setLastSyncedAt(res.updatedAt ?? new Date().toISOString());
+          if (isStaleDemo) {
+            const fresh = createDemoState();
+            localState = {
+              ...fresh,
+              theme: parsed.theme ?? fresh.theme,
+              accent: parsed.accent ?? fresh.accent,
+              accentIntensity: parsed.accentIntensity ?? fresh.accentIntensity,
+            };
+          } else {
+            localState = { ...createEmptyState(), ...parsed, budgetConfig: parsed.budgetConfig ?? (parsed.isDemo ? DEFAULT_BUDGET_CONFIG : EMPTY_BUDGET_CONFIG) };
           }
-        })
-        .catch(() => {
-          // Keep local state
-        });
+        }
+      } catch { /* ignore */ }
+
+      if (localState) {
+        setState(localState);
+        setReady(true); // Unblock UI immediately
+      }
+
+      // 2. Fetch fresh data from cloud (Supabase or filesystem)
+      try {
+        const result = await loadStateFn({ data: undefined });
+        if (result.data) {
+          setState({ ...createEmptyState(), ...result.data, budgetConfig: result.data.budgetConfig ?? (result.data.isDemo ? DEFAULT_BUDGET_CONFIG : EMPTY_BUDGET_CONFIG) });
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(result.data));
+        } else if (!localState) {
+          // No cloud + no local — show demo
+          setState(createDemoState());
+        }
+      } catch (e) {
+        console.warn("Cloud load failed, using local data:", e);
+        if (!localState) setState(createDemoState());
+      }
+
+      setAnchorDate(todayISO());
+      setReady(true);
     }
+
+    boot();
   }, []);
 
+  // ── Persist on Change ────────────────────────────────────────────────────
   useEffect(() => {
     if (!ready) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 
-    // Debounced auto-sync to cloud backend
-    const timeout = setTimeout(() => {
-      setSyncStatus("syncing");
-      pushCloudState({ data: { syncKey, state } })
-        .then((res) => {
-          if (res.success) {
-            setSyncStatus("synced");
-            setLastSyncedAt(res.updatedAt ?? new Date().toISOString());
-          } else {
-            setSyncStatus("error");
-          }
-        })
-        .catch(() => setSyncStatus("error"));
-    }, 1500);
+    // Always update localStorage immediately (offline cache)
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch { /* ignore quota errors */ }
 
-    return () => clearTimeout(timeout);
-  }, [state, ready, syncKey]);
+    // Debounced cloud save — wait 1.5s after last change
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        await saveStateFn({ data: state });
+      } catch (e) {
+        console.warn("Cloud save failed (will retry on next change):", e);
+      }
+    }, CLOUD_SAVE_DELAY);
+  }, [state, ready]);
 
+  // ── Theme / Accent ────────────────────────────────────────────────────────
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", state.theme === "dark");
@@ -260,22 +247,10 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addGoal = useCallback((goal: Omit<Goal, "id" | "createdAt">) => {
-    if (!goal.name.trim()) {
-      toast.error("Goal name is required");
-      return false;
-    }
-    if (goal.targetAmount <= 0) {
-      toast.error("Target amount must be greater than zero");
-      return false;
-    }
-    if (goal.savedAmount < 0) {
-      toast.error("Saved amount cannot be negative");
-      return false;
-    }
-    if (Number.isNaN(Date.parse(goal.targetDate))) {
-      toast.error("Pick a valid target date");
-      return false;
-    }
+    if (!goal.name.trim()) { toast.error("Goal name is required"); return false; }
+    if (goal.targetAmount <= 0) { toast.error("Target amount must be greater than zero"); return false; }
+    if (goal.savedAmount < 0) { toast.error("Saved amount cannot be negative"); return false; }
+    if (Number.isNaN(Date.parse(goal.targetDate))) { toast.error("Pick a valid target date"); return false; }
     setState((prev) => ({
       ...prev,
       goals: [
@@ -288,22 +263,10 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateGoal = useCallback((id: string, patch: Partial<Omit<Goal, "id" | "createdAt">>) => {
-    if (patch.name !== undefined && !patch.name.trim()) {
-      toast.error("Goal name is required");
-      return false;
-    }
-    if (patch.targetAmount !== undefined && patch.targetAmount <= 0) {
-      toast.error("Target amount must be greater than zero");
-      return false;
-    }
-    if (patch.savedAmount !== undefined && patch.savedAmount < 0) {
-      toast.error("Saved amount cannot be negative");
-      return false;
-    }
-    if (patch.targetDate !== undefined && Number.isNaN(Date.parse(patch.targetDate))) {
-      toast.error("Pick a valid target date");
-      return false;
-    }
+    if (patch.name !== undefined && !patch.name.trim()) { toast.error("Goal name is required"); return false; }
+    if (patch.targetAmount !== undefined && patch.targetAmount <= 0) { toast.error("Target amount must be greater than zero"); return false; }
+    if (patch.savedAmount !== undefined && patch.savedAmount < 0) { toast.error("Saved amount cannot be negative"); return false; }
+    if (patch.targetDate !== undefined && Number.isNaN(Date.parse(patch.targetDate))) { toast.error("Pick a valid target date"); return false; }
     setState((prev) => ({
       ...prev,
       goals: (prev.goals ?? []).map((g) =>
@@ -319,10 +282,7 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addToGoal = useCallback((id: string, amount: number) => {
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error("Enter an amount greater than zero");
-      return false;
-    }
+    if (!Number.isFinite(amount) || amount <= 0) { toast.error("Enter an amount greater than zero"); return false; }
     setState((prev) => ({
       ...prev,
       goals: (prev.goals ?? []).map((g) => {
@@ -341,9 +301,7 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
     const val = Math.max(0, limit);
     setState((prev) => {
       const cfg = prev.budgetConfig ?? DEFAULT_BUDGET_CONFIG;
-      if (!monthKey) {
-        return { ...prev, budgetConfig: { ...cfg, overallSpendLimit: val } };
-      }
+      if (!monthKey) return { ...prev, budgetConfig: { ...cfg, overallSpendLimit: val } };
       const overrides = { ...(cfg.monthOverrides ?? {}) };
       overrides[monthKey] = { ...(overrides[monthKey] ?? {}), overallSpendLimit: val };
       return { ...prev, budgetConfig: { ...cfg, monthOverrides: overrides } };
@@ -354,38 +312,28 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
     const val = Math.max(0, target);
     setState((prev) => {
       const cfg = prev.budgetConfig ?? DEFAULT_BUDGET_CONFIG;
-      if (!monthKey) {
-        return { ...prev, budgetConfig: { ...cfg, savingsTarget: val } };
-      }
+      if (!monthKey) return { ...prev, budgetConfig: { ...cfg, savingsTarget: val } };
       const overrides = { ...(cfg.monthOverrides ?? {}) };
       overrides[monthKey] = { ...(overrides[monthKey] ?? {}), savingsTarget: val };
       return { ...prev, budgetConfig: { ...cfg, monthOverrides: overrides } };
     });
   }, []);
 
-  const setCategoryBudget = useCallback(
-    (category: string, limit: number, monthKey?: string) => {
-      const val = Math.max(0, limit);
-      setState((prev) => {
-        const cfg = prev.budgetConfig ?? DEFAULT_BUDGET_CONFIG;
-        if (!monthKey) {
-          const cats = { ...cfg.categoryBudgets, [category]: val };
-          return { ...prev, budgetConfig: { ...cfg, categoryBudgets: cats } };
-        }
-        const overrides = { ...(cfg.monthOverrides ?? {}) };
-        const currentMonthCats = {
-          ...(overrides[monthKey]?.categoryBudgets ?? cfg.categoryBudgets),
-          [category]: val,
-        };
-        overrides[monthKey] = {
-          ...(overrides[monthKey] ?? {}),
-          categoryBudgets: currentMonthCats,
-        };
-        return { ...prev, budgetConfig: { ...cfg, monthOverrides: overrides } };
-      });
-    },
-    [],
-  );
+  const setCategoryBudget = useCallback((category: string, limit: number, monthKey?: string) => {
+    const val = Math.max(0, limit);
+    setState((prev) => {
+      const cfg = prev.budgetConfig ?? DEFAULT_BUDGET_CONFIG;
+      if (!monthKey) {
+        return { ...prev, budgetConfig: { ...cfg, categoryBudgets: { ...cfg.categoryBudgets, [category]: val } } };
+      }
+      const overrides = { ...(cfg.monthOverrides ?? {}) };
+      overrides[monthKey] = {
+        ...(overrides[monthKey] ?? {}),
+        categoryBudgets: { ...(overrides[monthKey]?.categoryBudgets ?? cfg.categoryBudgets), [category]: val },
+      };
+      return { ...prev, budgetConfig: { ...cfg, monthOverrides: overrides } };
+    });
+  }, []);
 
   const removeCategoryBudget = useCallback((category: string, monthKey?: string) => {
     setState((prev) => {
@@ -396,117 +344,49 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
         return { ...prev, budgetConfig: { ...cfg, categoryBudgets: cats } };
       }
       const overrides = { ...(cfg.monthOverrides ?? {}) };
-      const currentMonthCats = {
-        ...(overrides[monthKey]?.categoryBudgets ?? cfg.categoryBudgets),
-      };
+      const currentMonthCats = { ...(overrides[monthKey]?.categoryBudgets ?? cfg.categoryBudgets) };
       delete currentMonthCats[category];
-      overrides[monthKey] = {
-        ...(overrides[monthKey] ?? {}),
-        categoryBudgets: currentMonthCats,
-      };
+      overrides[monthKey] = { ...(overrides[monthKey] ?? {}), categoryBudgets: currentMonthCats };
       return { ...prev, budgetConfig: { ...cfg, monthOverrides: overrides } };
     });
   }, []);
 
-  const setMonthlyGoals = useCallback(
-    (
-      overallLimit: number,
-      savingsTarget: number,
-      categoryBudgets?: Record<string, number>,
-      monthKey?: string,
-    ) => {
-      setState((prev) => {
-        const cfg = prev.budgetConfig ?? DEFAULT_BUDGET_CONFIG;
-        if (!monthKey) {
-          return {
-            ...prev,
-            budgetConfig: {
-              ...cfg,
-              overallSpendLimit: Math.max(0, overallLimit),
-              savingsTarget: Math.max(0, savingsTarget),
-              categoryBudgets: categoryBudgets ? { ...categoryBudgets } : cfg.categoryBudgets,
-            },
-          };
-        }
-        const overrides = { ...(cfg.monthOverrides ?? {}) };
-        overrides[monthKey] = {
-          overallSpendLimit: Math.max(0, overallLimit),
-          savingsTarget: Math.max(0, savingsTarget),
-          categoryBudgets: categoryBudgets
-            ? { ...categoryBudgets }
-            : (overrides[monthKey]?.categoryBudgets ?? cfg.categoryBudgets),
+  const setMonthlyGoals = useCallback((
+    overallLimit: number,
+    savingsTarget: number,
+    categoryBudgets?: Record<string, number>,
+    monthKey?: string,
+  ) => {
+    setState((prev) => {
+      const cfg = prev.budgetConfig ?? DEFAULT_BUDGET_CONFIG;
+      if (!monthKey) {
+        return {
+          ...prev,
+          budgetConfig: {
+            ...cfg,
+            overallSpendLimit: Math.max(0, overallLimit),
+            savingsTarget: Math.max(0, savingsTarget),
+            categoryBudgets: categoryBudgets ? { ...categoryBudgets } : cfg.categoryBudgets,
+          },
         };
-        return { ...prev, budgetConfig: { ...cfg, monthOverrides: overrides } };
-      });
-      toast.success("Monthly budget goals updated");
-    },
-    [],
-  );
-
-  const setSyncKey = useCallback((k: string) => {
-    const clean = k.trim();
-    if (!clean) return;
-    setSyncKeyState(clean);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(SYNC_KEY_STORAGE, clean);
-    }
+      }
+      const overrides = { ...(cfg.monthOverrides ?? {}) };
+      overrides[monthKey] = {
+        overallSpendLimit: Math.max(0, overallLimit),
+        savingsTarget: Math.max(0, savingsTarget),
+        categoryBudgets: categoryBudgets ? { ...categoryBudgets } : (overrides[monthKey]?.categoryBudgets ?? cfg.categoryBudgets),
+      };
+      return { ...prev, budgetConfig: { ...cfg, monthOverrides: overrides } };
+    });
+    toast.success("Monthly budget goals updated");
   }, []);
-
-  const syncToCloud = useCallback(async () => {
-    setSyncStatus("syncing");
-    try {
-      const res = await pushCloudState({ data: { syncKey, state } });
-      if (res.success) {
-        setSyncStatus("synced");
-        setLastSyncedAt(res.updatedAt ?? new Date().toISOString());
-        toast.success("Money tree synced to cloud backend");
-        return true;
-      }
-      setSyncStatus("error");
-      toast.error("Failed to sync to cloud");
-      return false;
-    } catch {
-      setSyncStatus("error");
-      toast.error("Cloud sync error");
-      return false;
-    }
-  }, [syncKey, state]);
-
-  const restoreFromCloud = useCallback(
-    async (targetKey?: string) => {
-      const keyToUse = targetKey?.trim() || syncKey;
-      setSyncStatus("syncing");
-      try {
-        const res = await fetchCloudState({ data: { syncKey: keyToUse } });
-        if (res.success && res.state) {
-          setState(res.state);
-          setSyncStatus("synced");
-          setLastSyncedAt(res.updatedAt ?? new Date().toISOString());
-          if (targetKey) setSyncKey(targetKey);
-          toast.success("Restored tree from cloud backend");
-          return true;
-        }
-        setSyncStatus("error");
-        toast.error(res.message || "No cloud backup found for this key");
-        return false;
-      } catch {
-        setSyncStatus("error");
-        toast.error("Failed to fetch from cloud");
-        return false;
-      }
-    },
-    [syncKey, setSyncKey],
-  );
 
   const setCurrency = useCallback((currency: string) => {
     setState((prev) => ({ ...prev, currency }));
   }, []);
 
   const importState = useCallback((imported: Partial<MoneyState>) => {
-    if (!imported || typeof imported !== "object") {
-      toast.error("Invalid backup file");
-      return;
-    }
+    if (!imported || typeof imported !== "object") { toast.error("Invalid backup file"); return; }
     const merged: MoneyState = {
       ...createEmptyState(),
       ...imported,
@@ -518,11 +398,7 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       currency: imported.currency || "₹",
     };
     setState(merged);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-    } catch (e) {
-      console.error("Failed to save imported state to localStorage", e);
-    }
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged)); } catch { /* ignore */ }
     toast.success("Tree backup successfully restored!");
   }, []);
 
@@ -574,12 +450,6 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       },
       importState,
       lastAddedId,
-      syncKey,
-      setSyncKey,
-      syncStatus,
-      lastSyncedAt,
-      syncToCloud,
-      restoreFromCloud,
     }),
     [
       state,
@@ -609,12 +479,6 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       setCurrency,
       importState,
       lastAddedId,
-      syncKey,
-      setSyncKey,
-      syncStatus,
-      lastSyncedAt,
-      syncToCloud,
-      restoreFromCloud,
     ],
   );
 

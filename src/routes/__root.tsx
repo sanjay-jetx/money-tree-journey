@@ -3,7 +3,9 @@ import {
   Outlet,
   Link,
   createRootRouteWithContext,
+  redirect,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -15,6 +17,7 @@ import { TransactionDialogProvider } from "@/components/transactions/Transaction
 import { MoneyProvider } from "@/lib/money/store";
 import { Toaster } from "@/components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { checkAuthFn } from "../fns/authFns";
 
 function NotFoundComponent() {
   return (
@@ -109,6 +112,29 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
     ],
   }),
+  beforeLoad: async ({ location }) => {
+    // Skip auth guard for the login page itself
+    if (location.pathname === "/login") return;
+
+    try {
+      const { isAuthenticated } = await checkAuthFn();
+      if (!isAuthenticated) {
+        throw redirect({ to: "/login" });
+      }
+    } catch (e) {
+      // Re-throw redirect errors so TanStack Router handles the navigation
+      if (
+        e != null &&
+        typeof e === "object" &&
+        ("href" in e || "__isRedirect" in e || "routeId" in e)
+      ) {
+        throw e;
+      }
+      // On genuine auth errors (e.g. server unavailable), allow access
+      // so a transient API failure doesn't lock the user out
+      console.warn("Auth check failed — allowing access:", e);
+    }
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -131,18 +157,31 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  // Login page renders without the sidebar shell
+  const isLoginPage = pathname === "/login";
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MoneyProvider>
-        <TransactionDialogProvider>
-          <AppShell>
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </AppShell>
+      {isLoginPage ? (
+        // Bare layout for login — no sidebar/nav
+        <>
+          <Outlet />
           <Toaster position="top-center" />
-        </TransactionDialogProvider>
-      </MoneyProvider>
+        </>
+      ) : (
+        // Full app layout with MoneyProvider and AppShell
+        <MoneyProvider>
+          <TransactionDialogProvider>
+            <AppShell>
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+            </AppShell>
+            <Toaster position="top-center" />
+          </TransactionDialogProvider>
+        </MoneyProvider>
+      )}
     </QueryClientProvider>
   );
 }
