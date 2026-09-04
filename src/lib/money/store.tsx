@@ -9,7 +9,7 @@ import { DEFAULT_BUDGET_CONFIG, EMPTY_BUDGET_CONFIG } from "./budget";
 import { fetchCloudState, pushCloudState } from "./cloud";
 import { createDemoState, createEmptyState } from "./demo";
 import { EMPTY_FILTERS } from "./types";
-import type { Debt, Filters, Investment, MoneyState, Transaction, ViewMode } from "./types";
+import type { Debt, Filters, Goal, Investment, MoneyState, Transaction, ViewMode } from "./types";
 
 const STORAGE_KEY = "moneytree.state.v1";
 const SYNC_KEY_STORAGE = "moneytree.syncKey.v1";
@@ -37,6 +37,10 @@ export interface MoneyStore {
   addInvestment: (inv: Omit<Investment, "id">) => void;
   updateInvestment: (id: string, patch: Partial<Investment>) => void;
   deleteInvestment: (id: string) => void;
+  addGoal: (goal: Omit<Goal, "id" | "createdAt">) => boolean;
+  updateGoal: (id: string, patch: Partial<Omit<Goal, "id" | "createdAt">>) => boolean;
+  deleteGoal: (id: string) => void;
+  addToGoal: (id: string, amount: number) => boolean;
   updateOverallSpendLimit: (limit: number, monthKey?: string) => void;
   updateSavingsTarget: (target: number, monthKey?: string) => void;
   setCategoryBudget: (category: string, limit: number, monthKey?: string) => void;
@@ -255,6 +259,84 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, investments: prev.investments.filter((i) => i.id !== id) }));
   }, []);
 
+  const addGoal = useCallback((goal: Omit<Goal, "id" | "createdAt">) => {
+    if (!goal.name.trim()) {
+      toast.error("Goal name is required");
+      return false;
+    }
+    if (goal.targetAmount <= 0) {
+      toast.error("Target amount must be greater than zero");
+      return false;
+    }
+    if (goal.savedAmount < 0) {
+      toast.error("Saved amount cannot be negative");
+      return false;
+    }
+    if (Number.isNaN(Date.parse(goal.targetDate))) {
+      toast.error("Pick a valid target date");
+      return false;
+    }
+    setState((prev) => ({
+      ...prev,
+      goals: [
+        ...(prev.goals ?? []),
+        { ...goal, name: goal.name.trim(), id: newId("goal"), createdAt: new Date().toISOString() },
+      ],
+    }));
+    toast.success(`${goal.name.trim()} added to your goals`);
+    return true;
+  }, []);
+
+  const updateGoal = useCallback((id: string, patch: Partial<Omit<Goal, "id" | "createdAt">>) => {
+    if (patch.name !== undefined && !patch.name.trim()) {
+      toast.error("Goal name is required");
+      return false;
+    }
+    if (patch.targetAmount !== undefined && patch.targetAmount <= 0) {
+      toast.error("Target amount must be greater than zero");
+      return false;
+    }
+    if (patch.savedAmount !== undefined && patch.savedAmount < 0) {
+      toast.error("Saved amount cannot be negative");
+      return false;
+    }
+    if (patch.targetDate !== undefined && Number.isNaN(Date.parse(patch.targetDate))) {
+      toast.error("Pick a valid target date");
+      return false;
+    }
+    setState((prev) => ({
+      ...prev,
+      goals: (prev.goals ?? []).map((g) =>
+        g.id === id ? { ...g, ...patch, name: (patch.name ?? g.name).trim() } : g,
+      ),
+    }));
+    return true;
+  }, []);
+
+  const deleteGoal = useCallback((id: string) => {
+    setState((prev) => ({ ...prev, goals: (prev.goals ?? []).filter((g) => g.id !== id) }));
+    toast.success("Goal removed");
+  }, []);
+
+  const addToGoal = useCallback((id: string, amount: number) => {
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error("Enter an amount greater than zero");
+      return false;
+    }
+    setState((prev) => ({
+      ...prev,
+      goals: (prev.goals ?? []).map((g) => {
+        if (g.id !== id) return g;
+        const saved = g.savedAmount + amount;
+        if (saved >= g.targetAmount && g.savedAmount < g.targetAmount) {
+          toast.success(`${g.name} reached — goal completed!`);
+        }
+        return { ...g, savedAmount: saved };
+      }),
+    }));
+    return true;
+  }, []);
+
   const updateOverallSpendLimit = useCallback((limit: number, monthKey?: string) => {
     const val = Math.max(0, limit);
     setState((prev) => {
@@ -464,6 +546,10 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       addInvestment,
       updateInvestment,
       deleteInvestment,
+      addGoal,
+      updateGoal,
+      deleteGoal,
+      addToGoal,
       updateOverallSpendLimit,
       updateSavingsTarget,
       setCategoryBudget,
@@ -511,6 +597,10 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       addInvestment,
       updateInvestment,
       deleteInvestment,
+      addGoal,
+      updateGoal,
+      deleteGoal,
+      addToGoal,
       updateOverallSpendLimit,
       updateSavingsTarget,
       setCategoryBudget,

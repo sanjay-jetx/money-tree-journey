@@ -1,7 +1,7 @@
 import { addDays, format, subDays } from "date-fns";
 import { DEFAULT_BUDGET_CONFIG, EMPTY_BUDGET_CONFIG } from "./budget";
 import { ISO } from "./calc";
-import type { Debt, Investment, MoneyState, PaymentMethod, Transaction } from "./types";
+import type { Debt, Goal, Investment, MoneyState, PaymentMethod, Transaction } from "./types";
 
 let seed = 20260829;
 function rnd() {
