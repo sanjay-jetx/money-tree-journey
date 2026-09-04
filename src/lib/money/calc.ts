@@ -10,14 +10,22 @@ export function todayISO() {
 export function formatMoney(amount: number, currency = "₹") {
   const sign = amount < 0 ? "-" : "";
   const abs = Math.abs(Math.round(amount));
-  return `${sign}${currency}${abs.toLocaleString("en-IN")}`;
+  const locale = currency === "₹" ? "en-IN" : "en-US";
+  return `${sign}${currency}${abs.toLocaleString(locale)}`;
 }
 
 export function formatCompact(amount: number, currency = "₹") {
+  const sign = amount < 0 ? "-" : "";
   const abs = Math.abs(amount);
-  if (abs >= 10000000) return `${currency}${(amount / 10000000).toFixed(1)}Cr`;
-  if (abs >= 100000) return `${currency}${(amount / 100000).toFixed(1)}L`;
-  if (abs >= 1000) return `${currency}${(amount / 1000).toFixed(1)}k`;
+  if (currency === "₹") {
+    if (abs >= 10000000) return `${sign}${currency}${(abs / 10000000).toFixed(1)}Cr`;
+    if (abs >= 100000) return `${sign}${currency}${(abs / 100000).toFixed(1)}L`;
+    if (abs >= 1000) return `${sign}${currency}${(abs / 1000).toFixed(1)}k`;
+    return formatMoney(amount, currency);
+  }
+  if (abs >= 1000000000) return `${sign}${currency}${(abs / 1000000000).toFixed(1)}B`;
+  if (abs >= 1000000) return `${sign}${currency}${(abs / 1000000).toFixed(1)}M`;
+  if (abs >= 1000) return `${sign}${currency}${(abs / 1000).toFixed(1)}k`;
   return formatMoney(amount, currency);
 }
 

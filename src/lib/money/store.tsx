@@ -48,12 +48,14 @@ export interface MoneyStore {
     monthKey?: string,
   ) => void;
   setStartingBalance: (amount: number) => void;
+  setCurrency: (currency: string) => void;
   setOverdraft: (value: boolean) => void;
   toggleTheme: () => void;
   setAccent: (name: AccentName) => void;
   setAccentIntensity: (level: number) => void;
   loadDemo: () => void;
   clearAll: () => void;
+  importState: (imported: Partial<MoneyState>) => void;
   lastAddedId: string | null;
   syncKey: string;
   setSyncKey: (key: string) => void;
@@ -414,6 +416,34 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
     [syncKey, setSyncKey],
   );
 
+  const setCurrency = useCallback((currency: string) => {
+    setState((prev) => ({ ...prev, currency }));
+  }, []);
+
+  const importState = useCallback((imported: Partial<MoneyState>) => {
+    if (!imported || typeof imported !== "object") {
+      toast.error("Invalid backup file");
+      return;
+    }
+    const merged: MoneyState = {
+      ...createEmptyState(),
+      ...imported,
+      transactions: Array.isArray(imported.transactions) ? imported.transactions : [],
+      debts: Array.isArray(imported.debts) ? imported.debts : [],
+      investments: Array.isArray(imported.investments) ? imported.investments : [],
+      budgetConfig: imported.budgetConfig ?? EMPTY_BUDGET_CONFIG,
+      startingBalance: typeof imported.startingBalance === "number" ? imported.startingBalance : 0,
+      currency: imported.currency || "₹",
+    };
+    setState(merged);
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    } catch (e) {
+      console.error("Failed to save imported state to localStorage", e);
+    }
+    toast.success("Tree backup successfully restored!");
+  }, []);
+
   const value = useMemo<MoneyStore>(
     () => ({
       state,
@@ -441,6 +471,7 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       setMonthlyGoals,
       setStartingBalance: (amount: number) =>
         setState((prev) => ({ ...prev, startingBalance: Math.max(0, amount) })),
+      setCurrency,
       setOverdraft: (value: boolean) => setState((prev) => ({ ...prev, overdraft: value })),
       toggleTheme: () =>
         setState((prev) => ({ ...prev, theme: prev.theme === "dark" ? "light" : "dark" })),
@@ -455,6 +486,7 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
         setState((prev) => ({ ...createEmptyState(), theme: prev.theme, accent: prev.accent, accentIntensity: prev.accentIntensity }));
         toast.success("Your tree is now empty — plant your first entry");
       },
+      importState,
       lastAddedId,
       syncKey,
       setSyncKey,
@@ -484,6 +516,8 @@ export function MoneyProvider({ children }: { children: ReactNode }) {
       setCategoryBudget,
       removeCategoryBudget,
       setMonthlyGoals,
+      setCurrency,
+      importState,
       lastAddedId,
       syncKey,
       setSyncKey,

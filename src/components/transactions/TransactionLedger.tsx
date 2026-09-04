@@ -1,14 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { format, parseISO } from "date-fns";
-import { TreePine } from "lucide-react";
-import { useMemo } from "react";
+import { Filter, Search, TreePine, X } from "lucide-react";
+import { useMemo, useState } from "react";
 import { TxRow } from "@/components/tree/NodeDetailPanel";
 import { useTxDialog } from "@/components/transactions/TransactionDialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { categoryTotals, formatMoney, sortTx, sum } from "@/lib/money/calc";
 import { useMoney } from "@/lib/money/store";
 import { categoryDef } from "@/lib/money/types";
 import type { TxType } from "@/lib/money/types";
+import { cn } from "@/lib/utils";
 
 interface Props {
   type: TxType;
@@ -19,19 +21,54 @@ interface Props {
 export function TransactionLedger({ type, title, subtitle }: Props) {
   const { state, ready } = useMoney();
   const { openEdit, openDialog } = useTxDialog();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const list = useMemo(
     () => sortTx(state.transactions.filter((t) => t.type === type)).reverse(),
     [state.transactions, type],
   );
+
+  const cats = useMemo(() => categoryTotals(list, type), [list, type]);
+
+  const filteredList = useMemo(() => {
+    return list.filter((t) => {
+      if (selectedCategory && t.category !== selectedCategory) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesCat = t.category.toLowerCase().includes(q);
+        const matchesSubcat = t.subcategory?.toLowerCase().includes(q);
+        const matchesMerchant = t.merchant?.toLowerCase().includes(q);
+        const matchesNotes = t.notes?.toLowerCase().includes(q);
+        const matchesAmount = String(t.amount).includes(q);
+        const matchesPayment = t.paymentMethod.toLowerCase().includes(q);
+        return Boolean(
+          matchesCat ||
+            matchesSubcat ||
+            matchesMerchant ||
+            matchesNotes ||
+            matchesAmount ||
+            matchesPayment,
+        );
+      }
+      return true;
+    });
+  }, [list, selectedCategory, searchQuery]);
+
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof list>();
-    list.forEach((t) => map.set(t.date, [...(map.get(t.date) ?? []), t]));
+    const map = new Map<string, typeof filteredList>();
+    filteredList.forEach((t) => map.set(t.date, [...(map.get(t.date) ?? []), t]));
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
-  }, [list]);
+  }, [filteredList]);
 
   const total = sum(list.map((t) => t.amount));
-  const cats = categoryTotals(list, type);
+  const filteredTotal = sum(filteredList.map((t) => t.amount));
+  const isFiltering = Boolean(selectedCategory || searchQuery.trim());
+
+  function clearFilters() {
+    setSearchQuery("");
+    setSelectedCategory(null);
+  }
 
   return (
     <div className="space-y-6 p-4 lg:p-6">
@@ -43,38 +80,115 @@ export function TransactionLedger({ type, title, subtitle }: Props) {
         <div className="flex items-center gap-3">
           <div className="text-right">
             <div className="text-[10px] tracking-[0.14em] text-muted-foreground uppercase">
-              All time
+              {isFiltering ? "Filtered total" : "All time"}
             </div>
             <div
               className={`num text-xl font-semibold ${type === "income" ? "text-income" : "text-expense"}`}
             >
-              {ready ? formatMoney(total, state.currency) : "—"}
+              {ready ? formatMoney(isFiltering ? filteredTotal : total, state.currency) : "—"}
             </div>
           </div>
           <Button onClick={() => openDialog({ kind: type })}>+ Add {type}</Button>
         </div>
       </header>
 
-      {cats.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {cats.map((c) => (
-            <div
-              key={c.category}
-              className="rounded-xl border border-border bg-surface-2/50 px-3 py-2 text-xs"
+      {/* Search & Category Filter Section */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <div className="relative flex-1 min-w-[220px] max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder={`Search ${type}s (notes, merchant, category)...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-8 text-xs bg-surface"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+          </div>
+
+          {isFiltering && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="gap-1 text-xs text-muted-foreground hover:text-foreground h-9"
             >
-              <span className="mr-1.5">{categoryDef(c.category).icon}</span>
-              {c.category}
-              <span className="num ml-2 font-semibold">
-                {formatMoney(c.total, state.currency)}
-              </span>
-              <span className="ml-1.5 text-muted-foreground">{c.count} tx</span>
-            </div>
-          ))}
+              <X className="size-3.5" /> Clear filters
+            </Button>
+          )}
+
+          <div className="text-xs text-muted-foreground ml-auto">
+            {filteredList.length} of {list.length} {list.length === 1 ? "entry" : "entries"}
+          </div>
         </div>
-      )}
+
+        {cats.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(null)}
+              className={cn(
+                "rounded-xl border px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 cursor-pointer",
+                selectedCategory === null
+                  ? "border-primary bg-primary/10 font-semibold text-foreground shadow-sm"
+                  : "border-border bg-surface-2/40 text-muted-foreground hover:text-foreground hover:bg-surface-2/80",
+              )}
+            >
+              <Filter className="size-3" /> All categories
+            </button>
+            {cats.map((c) => {
+              const isSelected = selectedCategory === c.category;
+              return (
+                <button
+                  key={c.category}
+                  type="button"
+                  onClick={() => setSelectedCategory(isSelected ? null : c.category)}
+                  className={cn(
+                    "rounded-xl border px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 cursor-pointer",
+                    isSelected
+                      ? "border-primary bg-primary/10 font-semibold text-foreground shadow-sm"
+                      : "border-border bg-surface-2/40 text-muted-foreground hover:text-foreground hover:bg-surface-2/80",
+                  )}
+                >
+                  <span>{categoryDef(c.category).icon}</span>
+                  <span>{c.category}</span>
+                  <span className="num font-semibold text-foreground">
+                    {formatMoney(c.total, state.currency)}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">({c.count})</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {grouped.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nothing recorded yet.</p>
+        <div className="rounded-2xl border border-dashed border-border p-8 text-center space-y-3">
+          <p className="text-sm text-muted-foreground">
+            {isFiltering
+              ? "No entries match your active search or category filter."
+              : `No ${type} recorded yet.`}
+          </p>
+          {isFiltering ? (
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              Reset filters
+            </Button>
+          ) : (
+            <Button size="sm" onClick={() => openDialog({ kind: type })}>
+              Add your first {type}
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="space-y-5">
           {grouped.map(([date, items]) => (

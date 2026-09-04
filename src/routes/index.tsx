@@ -451,7 +451,7 @@ function TreePage() {
             onContextAction={setMenu}
             className="h-[560px] lg:h-[640px]"
           />
-          <ColorLegend className="pointer-events-none absolute right-4 bottom-4 z-20" />
+          <ColorLegend className="absolute left-4 bottom-4 z-20" />
         </div>
 
       ) : (

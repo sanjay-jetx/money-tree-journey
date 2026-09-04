@@ -312,7 +312,7 @@ function TimeMachinePage() {
             currency={state.currency}
             className="h-[520px] lg:h-[580px]"
           />
-          <ColorLegend className="pointer-events-none absolute right-4 bottom-4 z-20" />
+          <ColorLegend className="absolute left-4 bottom-4 z-20" />
         </div>
         <p className="text-center text-[11px] text-muted-foreground">
           Drag to pan · scroll to zoom · click any branch to inspect historical details

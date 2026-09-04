@@ -59,7 +59,13 @@ export const fetchCloudState = createServerFn({ method: "GET" })
 export const pushCloudState = createServerFn({ method: "POST" })
   .validator((data: SyncPayload) => data)
   .handler(async ({ data }): Promise<SyncResponse> => {
-    const key = data.syncKey || "default-tree";
+    if (!data || !data.state || typeof data.state !== "object") {
+      return {
+        success: false,
+        message: "Invalid sync payload: missing state",
+      };
+    }
+    const key = data.syncKey?.trim() || "default-tree";
     const now = new Date().toISOString();
     const entry = { state: data.state, updatedAt: now };
 
