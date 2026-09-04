@@ -56,6 +56,7 @@ export interface MoneyState {
   transactions: Transaction[];
   debts: Debt[];
   investments: Investment[];
+  goals: Goal[];
   budgetConfig: BudgetConfig;
 }
 
@@ -191,4 +192,17 @@ export const INVESTMENT_KINDS: InvestmentKindDef[] = [
 
 export function investmentKindDef(kind: InvestmentKind): InvestmentKindDef {
   return INVESTMENT_KINDS.find((k) => k.kind === kind) ?? { kind, label: kind, icon: "✨" };
+}
+
+export type GoalStatus = "active" | "completed" | "overdue";
+
+export interface Goal {
+  id: string;
+  name: string;
+  targetAmount: number;
+  savedAmount: number;
+  /** ISO date, yyyy-MM-dd */
+  targetDate: string;
+  description?: string | undefined;
+  createdAt: string;
 }
