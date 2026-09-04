@@ -179,6 +179,35 @@ export function createDemoState(): MoneyState {
     },
   ];
 
+  const goals: Goal[] = [
+    {
+      id: id("goal"),
+      name: "New Laptop",
+      targetAmount: 70000,
+      savedAmount: 45000,
+      targetDate: format(addDays(new Date(), 120), ISO),
+      description: "For design and dev work",
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: id("goal"),
+      name: "Emergency fund",
+      targetAmount: 50000,
+      savedAmount: 50000,
+      targetDate: format(addDays(new Date(), 60), ISO),
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: id("goal"),
+      name: "Goa trip",
+      targetAmount: 20000,
+      savedAmount: 8000,
+      targetDate: format(subDays(new Date(), 15), ISO),
+      description: "Missed the deadline — reschedule",
+      createdAt: new Date().toISOString(),
+    },
+  ];
+
   return {
     startingBalance: 10000,
     startDate,
@@ -191,6 +220,7 @@ export function createDemoState(): MoneyState {
     transactions,
     debts,
     investments,
+    goals,
     budgetConfig: DEFAULT_BUDGET_CONFIG,
   };
 }
@@ -208,6 +238,7 @@ export function createEmptyState(): MoneyState {
     transactions: [],
     debts: [],
     investments: [],
+    goals: [],
     budgetConfig: EMPTY_BUDGET_CONFIG,
   };
 }

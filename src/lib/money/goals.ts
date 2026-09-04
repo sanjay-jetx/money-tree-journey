@@ -34,11 +34,14 @@ export function goalMonthsRemaining(goal: Goal, today: string = todayISO()): num
   return Math.max(1, Math.round(days / 30.44));
 }
 
-const ORDER: Record<GoalStatus, number> = { active: 0, overdue: 1, completed: 2 };
+function statusOrder(status: GoalStatus): number {
+  if (status === "active") return 0;
+  return status === "overdue" ? 1 : 2;
+}
 
 export function sortGoals(goals: Goal[], today: string = todayISO()): Goal[] {
   return [...goals].sort((a, b) => {
-    const diff = ORDER[goalStatus(a, today)] - ORDER[goalStatus(b, today)];
+    const diff = statusOrder(goalStatus(a, today)) - statusOrder(goalStatus(b, today));
     if (diff !== 0) return diff;
     return a.targetDate.localeCompare(b.targetDate);
   });
@@ -65,7 +68,10 @@ export function goalsSummary(goals: Goal[], today: string = todayISO()): GoalsSu
   for (const g of goals) {
     summary.saved += g.savedAmount;
     summary.target += g.targetAmount;
-    summary[goalStatus(g, today)] += 1;
+    const st = goalStatus(g, today);
+    if (st === "active") summary.active += 1;
+    else if (st === "overdue") summary.overdue += 1;
+    else summary.completed += 1;
   }
   return summary;
 }
