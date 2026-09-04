@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, isRedirect, redirect, useNavigate } from "@tanstack/react-router";
 import { Eye, EyeOff, Leaf, Lock, Mail } from "lucide-react";
 import { useState } from "react";
 import { checkAuthFn, loginFn } from "../fns/authFns";
@@ -17,7 +17,15 @@ export const Route = createFileRoute("/login")({
       if (isAuthenticated) throw redirect({ to: "/" });
     } catch (e) {
       // Redirect errors should propagate; auth errors are fine to swallow
-      if (e && typeof e === "object" && ("href" in e || "__isRedirect" in e || "routeId" in e)) throw e;
+      if (
+        isRedirect(e) ||
+        (e instanceof Response && e.status >= 300 && e.status < 400) ||
+        (e != null &&
+          typeof e === "object" &&
+          ("href" in e || "__isRedirect" in e || "routeId" in e))
+      ) {
+        throw e;
+      }
     }
   },
   component: LoginPage,
@@ -179,9 +187,12 @@ function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-[11px] text-muted-foreground">
-          🔒 Private — only authorised access allowed
-        </p>
+        <div className="rounded-2xl border border-border/60 bg-surface-2/60 p-3.5 text-center text-xs text-muted-foreground">
+          <p className="font-semibold text-foreground">🔒 Single-User Private App</p>
+          <p className="mt-1 leading-relaxed text-[11px]">
+            Public sign-up is disabled to protect your finances. Your account credentials are configured in your environment. Enter your password to sign in.
+          </p>
+        </div>
       </div>
     </div>
   );

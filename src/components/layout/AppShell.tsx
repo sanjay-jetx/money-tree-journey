@@ -243,11 +243,25 @@ export function AppShell({ children }: { children: ReactNode }) {
               {state.theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
               {state.theme === "dark" ? "Light canvas" : "Dark canvas"}
             </Button>
-            {state.isDemo && (
-              <span className="rounded-full bg-pending-soft px-2 py-1 text-[10px] font-semibold tracking-wide text-pending uppercase">
-                Demo data
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {state.isDemo && (
+                <span className="rounded-full bg-pending-soft px-2 py-1 text-[10px] font-semibold tracking-wide text-pending uppercase">
+                  Demo data
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setMoreOpen(false);
+                  handleLogout();
+                }}
+                className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                <LogOut className="size-3.5" />
+                Sign out
+              </Button>
+            </div>
           </div>
         </SheetContent>
       </Sheet>

@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   redirect,
+  isRedirect,
   useRouter,
   useRouterState,
   HeadContent,
@@ -124,9 +125,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     } catch (e) {
       // Re-throw redirect errors so TanStack Router handles the navigation
       if (
-        e != null &&
-        typeof e === "object" &&
-        ("href" in e || "__isRedirect" in e || "routeId" in e)
+        isRedirect(e) ||
+        (e instanceof Response && e.status >= 300 && e.status < 400) ||
+        (e != null &&
+          typeof e === "object" &&
+          ("href" in e || "__isRedirect" in e || "routeId" in e))
       ) {
         throw e;
       }
