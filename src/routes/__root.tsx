@@ -114,8 +114,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
   }),
   beforeLoad: async ({ location }) => {
-    // Skip auth guard for the login page itself
-    if (location.pathname === "/login") return;
+    // Skip auth guard for auth pages (login & signup)
+    if (location.pathname === "/login" || location.pathname === "/signup") return;
 
     try {
       const { isAuthenticated } = await checkAuthFn();
@@ -162,13 +162,13 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
-  // Login page renders without the sidebar shell
-  const isLoginPage = pathname === "/login";
+  // Auth pages render without the sidebar shell
+  const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   return (
     <QueryClientProvider client={queryClient}>
-      {isLoginPage ? (
-        // Bare layout for login — no sidebar/nav
+      {isAuthPage ? (
+        // Bare layout for auth — no sidebar/nav
         <>
           <Outlet />
           <Toaster position="top-center" />

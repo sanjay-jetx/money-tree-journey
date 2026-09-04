@@ -24,22 +24,40 @@ function getSigningKey(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
+export interface SessionUser {
+  userId: string;
+  email: string;
+  name: string;
+}
+
 /** Creates a signed JWT session token valid for 7 days. */
-export async function createSessionToken(): Promise<string> {
-  return new SignJWT({ role: "owner" })
+export async function createSessionToken(user: SessionUser): Promise<string> {
+  return new SignJWT({ ...user, role: "owner" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${SESSION_MAX_AGE}s`)
     .sign(getSigningKey());
 }
 
-/** Returns true if the JWT token is valid and not expired. */
-export async function verifySessionToken(token: string): Promise<boolean> {
+/** Returns validity and user data from the JWT token. */
+export async function verifySessionToken(
+  token: string,
+): Promise<{ valid: boolean; user: SessionUser | null }> {
   try {
-    await jwtVerify(token, getSigningKey());
-    return true;
+    const { payload } = await jwtVerify(token, getSigningKey());
+    if (payload && typeof payload === "object" && "userId" in payload) {
+      return {
+        valid: true,
+        user: {
+          userId: String(payload["userId"]),
+          email: String(payload["email"] ?? ""),
+          name: String(payload["name"] ?? "User"),
+        },
+      };
+    }
+    return { valid: true, user: { userId: "owner", email: "sanjaynathiya81@gmail.com", name: "Sanjay" } };
   } catch {
-    return false;
+    return { valid: false, user: null };
   }
 }
 

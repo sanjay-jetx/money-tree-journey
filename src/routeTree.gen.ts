@@ -18,6 +18,7 @@ import { Route as InvestmentsRouteImport } from './routes/investments'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OwedRouteImport } from './routes/owed'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SpendingRouteImport } from './routes/spending'
 import { Route as TimeMachineRouteImport } from './routes/time-machine'
 
@@ -66,6 +67,11 @@ const SettingsRoute = SettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SpendingRoute = SpendingRouteImport.update({
   id: '/spending',
   path: '/spending',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/owed': typeof OwedRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/owed': typeof OwedRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/owed': typeof OwedRoute
   '/settings': typeof SettingsRoute
+  '/signup': typeof SignupRoute
   '/spending': typeof SpendingRoute
   '/time-machine': typeof TimeMachineRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/owed'
     | '/settings'
+    | '/signup'
     | '/spending'
     | '/time-machine'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/owed'
     | '/settings'
+    | '/signup'
     | '/spending'
     | '/time-machine'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/owed'
     | '/settings'
+    | '/signup'
     | '/spending'
     | '/time-machine'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OwedRoute: typeof OwedRoute
   SettingsRoute: typeof SettingsRoute
+  SignupRoute: typeof SignupRoute
   SpendingRoute: typeof SpendingRoute
   TimeMachineRoute: typeof TimeMachineRoute
 }
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/spending': {
       id: '/spending'
       path: '/spending'
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OwedRoute: OwedRoute,
   SettingsRoute: SettingsRoute,
+  SignupRoute: SignupRoute,
   SpendingRoute: SpendingRoute,
   TimeMachineRoute: TimeMachineRoute,
 }

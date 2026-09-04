@@ -1,8 +1,8 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { LogOut, Menu, Moon, Plus, Sun } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
-import { logoutFn } from "@/fns/authFns";
+import { checkAuthFn, logoutFn } from "@/fns/authFns";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -44,7 +44,16 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { openDialog } = useTxDialog();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const [moreOpen, setMoreOpen] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    checkAuthFn()
+      .then((res) => {
+        if (res.user?.name) setUserName(res.user.name);
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleLogout() {
     try {
@@ -105,6 +114,18 @@ export function AppShell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+
+        {userName && (
+          <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-white uppercase shadow-sm">
+              {userName.charAt(0)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-semibold text-white">{userName}</div>
+              <div className="text-[10px] text-sidebar-muted">Personal Account</div>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-2 border-t border-white/10 pt-4 mt-2">
           <Button
@@ -204,7 +225,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
             <SheetDescription className="text-xs">
-              Explore your cashflow tree and all features.
+              {userName ? `Logged in as ${userName}` : "Explore your cashflow tree and all features."}
             </SheetDescription>
           </SheetHeader>
 
