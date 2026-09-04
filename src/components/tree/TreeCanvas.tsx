@@ -2,6 +2,7 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  Compass,
   FoldVertical,
   Maximize2,
   Minus,
@@ -15,6 +16,7 @@ import { formatMoney } from "@/lib/money/calc";
 import { NODE_H, NODE_W, layoutTree } from "@/lib/money/tree";
 import type { Edge, PositionedNode, TreeNode } from "@/lib/money/tree";
 import { cn } from "@/lib/utils";
+import { Minimap } from "./Minimap";
 
 function nodeToneClasses(node: PositionedNode): string {
   switch (node.kind) {
@@ -100,6 +102,29 @@ export function TreeCanvas({
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const [hovered, setHovered] = useState<PositionedNode | null>(null);
 
+  // Container dimensions for minimap & viewport calculations
+  const [containerDims, setContainerDims] = useState({ width: 800, height: 600 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const updateDims = () => {
+      setContainerDims({ width: el.clientWidth, height: el.clientHeight });
+    };
+    updateDims();
+    const ro = new ResizeObserver(updateDims);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const [minimapOpen, setMinimapOpen] = useState(true);
+  const [recentlyToggledId, setRecentlyToggledId] = useState<string | null>(null);
+  const pendingAnchorRef = useRef<{
+    id: string;
+    screenX: number;
+    screenY: number;
+    scale: number;
+  } | null>(null);
+
   const { nodes, edges, width, height } = useMemo(
     () => layoutTree(root, collapsed),
     [root, collapsed],
@@ -126,8 +151,6 @@ export function TreeCanvas({
     return { activePathIds: pathIds, activeEdgeIds: edgeIds };
   }, [activeId, edges]);
 
-
-
   const center = useCallback(
     (scale?: number) => {
       const el = containerRef.current;
@@ -140,11 +163,12 @@ export function TreeCanvas({
     [nodes, width],
   );
 
-  /** Smoothly snaps canvas so the given node appears centered. */
+  /** Smoothly snaps canvas so the given node appears centered and highlighted. */
   const centerOnNode = useCallback(
     (node: PositionedNode) => {
       const el = containerRef.current;
       if (!el) return;
+      setRecentlyToggledId(node.id);
       setTransform((t) => ({
         ...t,
         x: el.clientWidth / 2 - (node.x + NODE_W / 2) * t.scale,
@@ -153,6 +177,70 @@ export function TreeCanvas({
     },
     [],
   );
+
+  /**
+   * Toggles branch collapse/expand while anchoring the node to stay in the exact
+   * same screen position or cleanly centered within the visible viewport!
+   * We capture scale in a ref to avoid stale closure issues inside the layout effect.
+   */
+  const scaleRef = useRef(transform.scale);
+  scaleRef.current = transform.scale;
+
+  const handleToggleNode = useCallback(
+    (nodeId: string) => {
+      const el = containerRef.current;
+      const targetNode = nodes.find((n) => n.id === nodeId);
+      if (el && targetNode) {
+        const s = scaleRef.current;
+        const screenX = transform.x + (targetNode.x + NODE_W / 2) * s;
+        const screenY = transform.y + (targetNode.y + NODE_H / 2) * s;
+        pendingAnchorRef.current = { id: nodeId, screenX, screenY, scale: s };
+      }
+      setRecentlyToggledId(nodeId);
+      onToggle(nodeId);
+    },
+    [nodes, transform.x, transform.y, onToggle],
+  );
+
+  // Clear recently toggled pulse after 2 seconds
+  useEffect(() => {
+    if (!recentlyToggledId) return;
+    const timer = setTimeout(() => setRecentlyToggledId(null), 2000);
+    return () => clearTimeout(timer);
+  }, [recentlyToggledId]);
+
+  // Keep toggled node anchored in view after tree layout recalculates!
+  useEffect(() => {
+    if (!pendingAnchorRef.current) return;
+    const { id, screenX, screenY, scale } = pendingAnchorRef.current;
+    pendingAnchorRef.current = null;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const newNode = nodes.find((n) => n.id === id);
+    if (!newNode) return;
+
+    const viewW = el.clientWidth;
+    const viewH = el.clientHeight;
+
+    // Attempt to keep node at same screen position
+    let targetTx = screenX - (newNode.x + NODE_W / 2) * scale;
+    let targetTy = screenY - (newNode.y + NODE_H / 2) * scale;
+
+    // Safety: if target would put node out of comfortable view, re-center on it
+    const finalSx = targetTx + (newNode.x + NODE_W / 2) * scale;
+    const finalSy = targetTy + (newNode.y + NODE_H / 2) * scale;
+    if (finalSx < 80 || finalSx > viewW - 80) {
+      targetTx = viewW / 2 - (newNode.x + NODE_W / 2) * scale;
+    }
+    if (finalSy < 60 || finalSy > viewH - 100) {
+      targetTy = Math.max(48, Math.min(viewH * 0.35, viewH / 3 - newNode.y * scale));
+    }
+
+    setTransform((prev) => ({ ...prev, x: targetTx, y: targetTy }));
+  // Only re-run when the nodes array identity changes (after layout recalculates)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes]);
 
   /** All currently-collapsed nodes that have children (visible in layout). */
   const collapsedNodes = useMemo(
@@ -306,18 +394,19 @@ export function TreeCanvas({
           const onPath = activePathIds.has(node.id);
           const isHovered = hovered?.id === node.id;
           const isSelected = selectedId === node.id;
+          const isRecentlyToggled = recentlyToggledId === node.id;
           const muted = Boolean(activeId) && !onPath;
           return (
             <div
               key={node.id}
               data-node
               className="absolute"
-              style={{ left: node.x, top: node.y, width: NODE_W, zIndex: onPath ? 5 : 1 }}
+              style={{ left: node.x, top: node.y, width: NODE_W, zIndex: onPath || isRecentlyToggled ? 5 : 1 }}
             >
               <button
                 type="button"
                 onClick={() => onSelect(node)}
-                onDoubleClick={() => node.hasChildren && onToggle(node.id)}
+                onDoubleClick={() => node.hasChildren && handleToggleNode(node.id)}
                 onMouseEnter={() => setHovered(node)}
                 onMouseLeave={() => setHovered((h) => (h?.id === node.id ? null : h))}
                 onContextMenu={(e) => {
@@ -332,6 +421,8 @@ export function TreeCanvas({
                   "-translate-y-1.5 scale-[1.03] ring-2 ring-primary/80 ring-offset-2 ring-offset-canvas shadow-[var(--shadow-glow)]",
                   isSelected &&
                   "ring-[3px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_18px_40px_-14px_var(--glow)]",
+                  isRecentlyToggled &&
+                  "ring-[3.5px] ring-primary ring-offset-2 ring-offset-canvas shadow-[0_0_24px_var(--glow)] scale-[1.02]",
                   dimmed
                     ? "opacity-20"
                     : muted
@@ -406,13 +497,9 @@ export function TreeCanvas({
                 <button
                   type="button"
                   data-node
-                  onClick={() => {
-                    onToggle(node.id);
-                    // After collapsing, immediately re-center the canvas on this node
-                    // so it never disappears off-screen
-                    if (!node.collapsed) {
-                      setTimeout(() => centerOnNode(node), 30);
-                    }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleToggleNode(node.id);
                   }}
                   aria-label={node.collapsed ? "Expand branch" : "Collapse branch"}
                   className={cn(
@@ -438,9 +525,9 @@ export function TreeCanvas({
       </div>
 
       {hovered && (
-        <div className="glass-panel pointer-events-none absolute top-4 left-4 max-w-[260px] rounded-xl px-3 py-2 text-xs">
-          <div className="font-semibold">{hovered.label}</div>
-          <div className="num text-sm">{formatMoney(hovered.amount, currency)}</div>
+        <div className="glass-panel pointer-events-none absolute top-14 left-3.5 max-w-[220px] rounded-xl px-3 py-2 text-xs z-30 shadow-lg">
+          <div className="font-semibold truncate">{hovered.label}</div>
+          <div className="num text-sm font-bold mt-0.5">{formatMoney(hovered.amount, currency)}</div>
           {hovered.balanceBefore !== undefined && hovered.balanceAfter !== undefined && (
             <div className="mt-1.5 flex items-center gap-2 border-t border-border/40 pt-1.5">
               <div className="flex flex-col">
@@ -449,7 +536,7 @@ export function TreeCanvas({
                   {formatMoney(hovered.balanceBefore, currency)}
                 </span>
               </div>
-              <ArrowRight className="size-3 text-muted-foreground" />
+              <ArrowRight className="size-3 text-muted-foreground shrink-0" />
               <div className="flex flex-col">
                 <span className="text-[9px] tracking-wider text-muted-foreground uppercase">After</span>
                 <span className="num text-[11px] font-semibold">
@@ -458,9 +545,9 @@ export function TreeCanvas({
               </div>
             </div>
           )}
-          <div className="mt-1 text-muted-foreground">
+          <div className="mt-1 text-muted-foreground text-[10px]">
             {hovered.hasChildren
-              ? `${hovered.children.length} branches · double-click to ${hovered.collapsed ? "expand" : "collapse"}`
+              ? `${hovered.children.length} children · double-click to ${hovered.collapsed ? "expand" : "collapse"}`
               : "click for details"}
           </div>
         </div>
@@ -512,6 +599,28 @@ export function TreeCanvas({
         </div>
       )}
 
+      {/* ── Game Minimap / Radar ── */}
+      <Minimap
+        nodes={nodes}
+        edges={edges}
+        totalWidth={width}
+        totalHeight={height}
+        transform={transform}
+        onTransformChange={setTransform}
+        containerWidth={containerDims.width}
+        containerHeight={containerDims.height}
+        activeId={activeId}
+        onCenterOnNode={centerOnNode}
+        onFit={() => {
+          const el = containerRef.current;
+          if (!el) return;
+          center(Math.min(1.4, Math.max(0.22, (el.clientWidth - 80) / Math.max(width, 1))));
+        }}
+        isOpen={minimapOpen}
+        onToggleOpen={() => setMinimapOpen((o) => !o)}
+        className="absolute right-4 bottom-20 z-20"
+      />
+
       <div className="glass-panel absolute right-4 bottom-4 flex items-center gap-1 rounded-xl p-1 z-20 shadow-sm">
         <IconBtn
           onClick={() => {
@@ -528,6 +637,7 @@ export function TreeCanvas({
               // Expand all: toggle every collapsed node
               Array.from(collapsed).forEach((id) => onToggle(id));
             }
+            setTimeout(() => center(), 60);
           }}
           label={collapsed.size === 0 ? "Collapse branches" : "Expand all branches"}
         >
@@ -536,6 +646,18 @@ export function TreeCanvas({
           ) : (
             <UnfoldVertical className="size-4" />
           )}
+        </IconBtn>
+        <div className="h-4 w-px bg-border/80 mx-0.5" />
+        <IconBtn
+          onClick={() => setMinimapOpen((o) => !o)}
+          label={minimapOpen ? "Hide minimap radar" : "Show minimap radar"}
+        >
+          <Compass
+            className={cn(
+              "size-4 transition-colors",
+              minimapOpen ? "text-primary" : "text-muted-foreground",
+            )}
+          />
         </IconBtn>
         <div className="h-4 w-px bg-border/80 mx-0.5" />
         <IconBtn onClick={() => zoom(-1)} label="Zoom out">
